@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#242c29"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="icon-180.png"><link rel="apple-touch-icon" href="icon-180.png">
+<title>Amidar by Paul Robson — Browser Edition</title>
+<style>
+:root{color-scheme:dark;--lcd:#a8b396;--ink:#25372b;--panel:#303a35;--edge:#536359}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overscroll-behavior:none}
+body{background:#202824;color:#e4e9df;font:15px system-ui,-apple-system,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none}
+#app{height:100dvh;height:100svh;display:flex;flex-direction:column;padding: max(10px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));gap:8px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px}h1{font-size:18px;letter-spacing:.06em;margin:0}h1 small{display:block;font-size:10px;font-weight:400;letter-spacing:.015em;color:#b9c7bc;margin-top:2px}
+button{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:8px 12px;cursor:pointer;touch-action:none}button:focus-visible{outline:3px solid #b6d7ab;outline-offset:3px}button:active,.active{background:#52634e!important}nav{display:flex;gap:6px}nav button{font-size:12px;padding:8px}
+#stage{flex:1;min-height:0;display:grid;place-items:center;position:relative}#lcdShell{padding:8px;border-radius:8px;background:#778370;box-shadow:0 5px 20px #0005,inset 0 0 0 1px #c2c9b14d;line-height:0}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:var(--lcd);outline:none}
+#status{height:20px;text-align:center;color:#bbc8bc;font-size:12px;line-height:20px;white-space:nowrap}#controls{display:flex;width:100%;justify-content:space-between;align-items:center;flex-shrink:0;height:156px;position:relative}
+#jump{width:120px;height:120px;border-radius:50%;border:2px solid #6c7e64;background:radial-gradient(circle at 35% 28%,#53694e,#303e30);box-shadow:0 6px 0 #142019,0 8px 16px #0006;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;font-size:18px;font-weight:700;letter-spacing:.05em}#jump span{font-size:11px;font-weight:400;letter-spacing:0;color:#c7d2be}
+#stick{width:148px;height:148px;border:2px solid #586b57;border-radius:50%;position:relative;background:radial-gradient(circle,#3c4a3b,#263127);touch-action:none;flex-shrink:0;box-shadow:inset 0 2px 16px #0006}
+#stick:before{content:"";position:absolute;top:18px;bottom:18px;left:54px;right:54px;background:#4b5b47;border-radius:8px}#stick:after{content:"";position:absolute;left:18px;right:18px;top:54px;bottom:54px;background:#4b5b47;border-radius:8px}
+#knob{position:absolute;z-index:2;left:49px;top:49px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 25%,#87987a,#4b6149);border:1px solid #99ab8b;box-shadow:0 3px 8px #0009;pointer-events:none}
+.arrow{position:absolute;z-index:1;color:#a9baa0;font-size:15px;pointer-events:none}.up{top:7px;left:65px}.down{bottom:7px;left:65px}.left{left:8px;top:62px}.right{right:8px;top:62px}
+#controlHint{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;line-height:1.7;text-align:center;color:#a8b6a9;pointer-events:none}footer{text-align:center;font-size:10px;color:#9cafa0;min-height:14px}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);padding:10px 16px;border-radius:20px;background:#101d15ee;border:1px solid #79926d;font-size:13px;z-index:5;opacity:0;transition:opacity .2s;pointer-events:none}#toast.show{opacity:1}
+#help{position:fixed;inset:0;z-index:8;background:#101914df;display:grid;place-items:center;padding:24px}#help[hidden]{display:none}#help article{max-width:520px;max-height:90vh;overflow:auto;touch-action:pan-y;background:#303c32;border:1px solid #839279;border-radius:16px;padding:22px;line-height:1.55;font-size:14px}#help h2{margin:0 0 12px}#help button{float:right}#help ul{padding-left:20px}
+@media(max-width:550px){h1{font-size:15px}h1 small{font-size:9px}#controlHint{font-size:9px;max-width:110px}#jump{width:100px;height:100px;font-size:16px}#stick{transform:scale(.85);transform-origin:right center}#controls{height:130px}nav button{padding:7px;font-size:11px}}
+@media(max-height:540px) and (orientation:landscape){#controls{height:108px}#jump{width:90px;height:90px;font-size:15px}#stick{transform:scale(.7);transform-origin:right center}#controls{position:absolute;bottom:16px;left:16px;width:calc(100% - 32px);pointer-events:none}#controls>*{pointer-events:auto}#controlHint{display:none}#stage{padding-bottom:0}footer{font-size:9px}header{min-height:30px}#app{gap:4px}}
+</style>
+</head>
+<body><main id="app">
+<header><h1>AMIDAR<small>Amidar by Paul Robson · TI-83 / 2001</small></h1><nav aria-label="Game settings"><button id="start">Start</button><button id="pause">Pause</button><button id="sound" aria-pressed="true">Sound on</button><button id="helpOpen" aria-label="Instructions">?</button></nav></header>
+<section id="stage" aria-label="Calculator display"><div id="lcdShell"><canvas id="lcd" width="96" height="64" tabindex="0" aria-label="Amidar game, 96 by 64 pixel calculator display"></canvas></div></section>
+<div id="status" aria-live="polite">Tap Jump or Start to play</div>
+<section id="controls" aria-label="Touch controls"><button id="jump" aria-label="Jump or start game">JUMP<span id="jumpCount">3 available</span></button><div id="controlHint">Paint every box<br>3 jumps per life<br>Keep moving!</div><div id="stick" role="group" aria-label="Four-way joystick"><span class="arrow up">▲</span><span class="arrow down">▼</span><span class="arrow left">◀</span><span class="arrow right">▶</span><div id="knob"></div></div></section>
+<footer>Arrows / WASD · Space / X: jump · P: pause · Controller: D-pad / stick + A / B</footer>
+</main><div id="toast" role="status"></div>
+<section id="help" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle"><article><button id="helpClose">Close</button><h2 id="helpTitle">How to play</h2><p>Travel along the grid, collect the dots, and outline every box to paint its interior. The board scrolls vertically as you move.</p><ul><li><b>Move:</b> far-right joystick, arrows / WASD, or controller D-pad / left stick. Four directions only; no diagonals.</li><li>You keep moving in your last valid direction after releasing the controls, just like the original. Hold your next direction until you reach a junction.</li><li><b>Jump:</b> far-left button, Space / X, or controller A / B. You have three jumps per life. While jumping, enemies appear to leap and cannot hurt you. They do not stop moving.</li><li><b>Score:</b> 10 per dot; 500 for a bonus. Paint all 22 boxes to advance. Three lives; jumps refill after a death or new level.</li><li><b>Start:</b> Jump, Enter, controller Menu, or Start. P / controller View pauses. Escape returns to the title.</li></ul><p>Original board, sprites, and lettering from Paul Robson’s May 25, 2001 build 335. Browser rules translation; newly designed contemporary sound, no sampled music. Best in landscape on iPad. Sound starts only after your first interaction.</p></article></section>
+<script src="data.js"></script><script src="engine.js"></script><script src="audio.js"></script><script src="app.js"></script>
+</body></html>
