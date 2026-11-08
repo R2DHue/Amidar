@@ -19,12 +19,13 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;backg
 #mid{display:flex;flex-direction:column;gap:8px;align-items:center}
 #stick{width:148px;height:148px;border:2px solid #586b57;border-radius:50%;position:relative;background:radial-gradient(circle,#3c4a3b,#263127);touch-action:none;flex-shrink:0;box-shadow:inset 0 2px 16px #0006}
 #stick:before{content:"";position:absolute;top:18px;bottom:18px;left:54px;right:54px;background:#4b5b47;border-radius:8px}#stick:after{content:"";position:absolute;left:18px;right:18px;top:54px;bottom:54px;background:#4b5b47;border-radius:8px}
+#stickZone{padding:26px;margin:-26px;border-radius:50%;touch-action:none;flex-shrink:0}#stick *,#stick:before,#stick:after{pointer-events:none}
 #knob{position:absolute;z-index:2;left:49px;top:49px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 25%,#87987a,#4b6149);border:1px solid #99ab8b;box-shadow:0 3px 8px #0009;pointer-events:none}
 .arrow{position:absolute;z-index:1;color:#a9baa0;font-size:15px;pointer-events:none}.up{top:7px;left:65px}.down{bottom:7px;left:65px}.left{left:8px;top:62px}.right{right:8px;top:62px}
 @media (orientation:landscape){
  #app{grid-template-areas:"bar bar bar" "jumpc screen stickc";grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:auto 1fr}
  #controls{display:contents}#jump{grid-area:jumpc;justify-self:center;align-self:end;margin-bottom:40px}
- #stick{grid-area:stickc;justify-self:center;align-self:end;margin-bottom:30px}#mid{grid-area:jumpc;align-self:start;margin-top:20px;justify-self:center}
+ #stickZone{grid-area:stickc;justify-self:center;align-self:end;margin-bottom:4px}#mid{grid-area:jumpc;align-self:start;margin-top:20px;justify-self:center}
 }
 #overlay{position:fixed;inset:0;z-index:9;background:#000e;display:grid;place-items:center;padding:20px}#overlay[hidden]{display:none}
 #overlay article{max-width:560px;background:#151915;border:1px solid #5d6f58;border-radius:16px;padding:22px;line-height:1.5;max-height:92vh;overflow:auto;touch-action:pan-y}
@@ -37,7 +38,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;backg
  <nav id="bar"><button id="coin">COIN</button><button id="start1">1P START</button><button id="pause">Pause</button><button id="sound" class="on">Sound on</button><button id="size">Size: Auto</button><button id="romBtn">ROM…</button></nav>
  <div id="screen"><canvas id="cv" width="224" height="256" aria-label="Amidar arcade screen"></canvas></div>
  <section id="controls"><button id="jump" aria-label="Jump">JUMP</button>
-  <div id="stick" role="group" aria-label="Four-way joystick"><span class="arrow up">▲</span><span class="arrow down">▼</span><span class="arrow left">◀</span><span class="arrow right">▶</span><div id="knob"></div></div></section>
+  <div id="stickZone"><div id="stick" role="group" aria-label="Four-way joystick"><span class="arrow up">▲</span><span class="arrow down">▼</span><span class="arrow left">◀</span><span class="arrow right">▶</span><div id="knob"></div></div></div></section>
 </main>
 <section id="overlay"><article>
  <h1>Amidar — original arcade</h1>

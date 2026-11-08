@@ -15,7 +15,7 @@ and runs the **original game code, graphics, colours and sound from your ROM set
 4. Tap **COIN**, then **1P START**.
 
 ## Controls
-- Touch: right 4-way joystick (strict, no diagonals, same design as the TI-83 build), left **JUMP**,
+- Touch: right 4-way joystick (strict, no diagonals). Touch anywhere on the pad (or just outside it): direction = where your finger is relative to the pad centre, no drag needed; left **JUMP**,
   top bar COIN / 1P START / Pause / Sound / Size / ROM.
 - **Size** button cycles Auto → 1× → 2× → 3× → 4× → 5× → Fill (remembered on this device).
   Auto = largest whole-number pixel multiple that shows the entire board. A fixed size larger than fits is

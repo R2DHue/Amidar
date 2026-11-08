@@ -81,17 +81,25 @@ $('sound').addEventListener('click', () => { soundOn = !soundOn; $('sound').text
 $('jump').addEventListener('pointerdown', e => { e.preventDefault(); $('jump').setPointerCapture(e.pointerId); touchJump = true; $('jump').classList.add('active'); });
 function relJump() { touchJump = false; $('jump').classList.remove('active'); }
 for (const n of ['pointerup', 'pointercancel', 'lostpointercapture']) $('jump').addEventListener(n, relJump);
+// Whole pad (plus a 26px invisible ring) is live. Direction = absolute position vs the FIXED pad centre, strict 4-way.
+const zone = $('stickZone');
+function stickDir(e) {
+  const r = $('stick').getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  if (Math.hypot(dx, dy) < r.width * 0.09) return null; // small neutral centre (~13px)
+  return direction4(dx, dy, touchDir, 0);
+}
 function moveStick(e) {
   if (e.pointerId !== stickPointer) return;
-  const r = $('stick').getBoundingClientRect(), x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2);
-  touchDir = direction4(x, y, touchDir, .18);
+  touchDir = stickDir(e);
   const v = { left: [-27, 0], right: [27, 0], up: [0, -27], down: [0, 27] }[touchDir] || [0, 0];
   $('knob').style.transform = `translate(${v[0]}px,${v[1]}px)`; e.preventDefault();
 }
-$('stick').addEventListener('pointerdown', e => { if (stickPointer !== null) return; stickPointer = e.pointerId; $('stick').setPointerCapture(e.pointerId); moveStick(e); });
-$('stick').addEventListener('pointermove', moveStick);
-function relStick(e) { if (e && e.pointerId !== stickPointer) return; stickPointer = null; touchDir = null; $('knob').style.transform = ''; }
-for (const n of ['pointerup', 'pointercancel', 'lostpointercapture']) $('stick').addEventListener(n, relStick);
+zone.addEventListener('pointerdown', e => { if (stickPointer !== null) return; e.preventDefault(); stickPointer = e.pointerId; try { zone.setPointerCapture(e.pointerId); } catch (_) { } moveStick(e); });
+zone.addEventListener('pointermove', moveStick);
+function relStick(e) { if (e && e.pointerId !== undefined && e.pointerId !== stickPointer) return; stickPointer = null; touchDir = null; $('knob').style.transform = ''; }
+for (const n of ['pointerup', 'pointercancel', 'lostpointercapture']) zone.addEventListener(n, relStick);
+zone.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+window.addEventListener('blur', () => clearInputs());
 window.addEventListener('keydown', e => {
   if (keyMap[e.code] || ['Space', 'KeyX', 'Enter', 'KeyP', 'Digit5', 'KeyC', 'Digit1'].includes(e.code)) {
     e.preventDefault(); if (!keys.has(e.code)) keys.set(e.code, ++seq);
