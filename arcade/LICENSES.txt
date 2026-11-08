@@ -1,0 +1,35 @@
+Amidar arcade browser player — third-party notices
+==================================================
+NO GAME ROMS ARE INCLUDED. Amidar (c) 1982 Konami. You must supply your own ROM set.
+
+1. src/core.js — JavaScript port of hardware behaviour from MAME's galaxian driver
+   (src/mame/galaxian/galaxian.cpp, galaxian_v.cpp, galaxian.h; "turtles" machine,
+   memory map, PPI/sound wiring, palette and sprite/tile rendering).
+   MAME galaxian driver: license BSD-3-Clause,
+   copyright-holders: Aaron Giles, Couriersud, Stephane Humbert, Robbbert.
+   Redistribution and use in source and binary forms, with or without modification, are permitted
+   provided that the following conditions are met: (1) Redistributions of source code must retain the
+   above copyright notice, this list of conditions and the following disclaimer. (2) Redistributions in
+   binary form must reproduce the above copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials provided with the distribution. (3) Neither the
+   name of the copyright holder nor the names of its contributors may be used to endorse or promote
+   products derived from this software without specific prior written permission.
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+   WARRANTIES ... ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
+   DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE.
+   Source: https://github.com/mamedev/mame/tree/master/src/mame/galaxian
+
+2. vendor/Z80.js — Z80 CPU emulator, (c) Molly Howell, MIT License.
+   https://github.com/DrGoldfire/Z80.js
+
+3. vendor/fflate.min.js — fflate 0.8.2, (c) 2023 Arjun Barrett, MIT License (see vendor/fflate-LICENSE.txt).
+   https://github.com/101arrowz/fflate
+
+MIT License text: Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+following conditions: The above copyright notice and this permission notice shall be included in all copies
+or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+The on-screen joystick design is reused from the earlier Amidar (TI-83 port) browser build.
