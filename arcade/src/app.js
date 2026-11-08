@@ -114,13 +114,33 @@ function pollPad() {
   const menu = b(9), view = b(8); if (menu && !lastMenu) start1(); if (view && !lastView) coin(); lastMenu = menu; lastView = view;
 }
 
-// ---------- Layout: whole portrait screen, integer-ish nearest neighbour ----------
-function fit() {
-  const s = $('screen').getBoundingClientRect(); let k = Math.min(s.width / 224, s.height / 256);
-  if (k >= 2) k = Math.floor(k); // integer scale = perfectly even, sharp pixels
-  cv.style.width = Math.floor(224 * k) + 'px'; cv.style.height = Math.floor(256 * k) + 'px';
+// ---------- Layout: whole portrait screen, nearest-neighbour ----------
+// Size is computed from the viewport (not from the grid cell, which in landscape is sized by the canvas itself).
+const SIZES = ['auto', 1, 2, 3, 4, 5, 'fill']; let sizeMode = localStorage.getItem('amidarSize') || 'auto';
+if (!SIZES.map(String).includes(String(sizeMode))) sizeMode = 'auto';
+function maxScale() {
+  const vv = window.visualViewport, W = vv ? vv.width : innerWidth, H = vv ? vv.height : innerHeight;
+  const cs = getComputedStyle(document.documentElement);
+  const bar = $('bar').getBoundingClientRect().height, land = W > H;
+  const ctrl = land ? 0 : $('controls').getBoundingClientRect().height;
+  const side = land ? 2 * 170 : 0; // room for JUMP and stick beside the screen
+  const aw = Math.max(50, W - side - 8), ah = Math.max(50, H - bar - ctrl - 2);
+  return Math.min(aw / 224, ah / 256);
 }
-window.addEventListener('resize', fit); window.addEventListener('orientationchange', () => setTimeout(fit, 200)); new ResizeObserver(fit).observe($('screen'));
+function fit() {
+  const m = maxScale(), mi = Math.max(1, Math.floor(m)); let k, note = '';
+  if (sizeMode === 'auto') k = mi;
+  else if (sizeMode === 'fill') k = Math.max(1, m);
+  else { k = Math.min(+sizeMode, mi); if (+sizeMode > mi) note = ` (max ${mi}× fits)`; }
+  cv.style.width = Math.floor(224 * k) + 'px'; cv.style.height = Math.floor(256 * k) + 'px';
+  const label = sizeMode === 'auto' ? `Auto ${mi}×` : sizeMode === 'fill' ? `Fill ${k.toFixed(2)}×` : `${k}×${note}`;
+  $('size').textContent = 'Size: ' + label; return { k, mi, m, label };
+}
+$('size').addEventListener('click', () => { sizeMode = SIZES[(SIZES.map(String).indexOf(String(sizeMode)) + 1) % SIZES.length]; localStorage.setItem('amidarSize', sizeMode); const r = fit(); toast('Size: ' + r.label); });
+let fitT; const refit = () => { fit(); clearTimeout(fitT); fitT = setTimeout(fit, 250); };
+window.addEventListener('resize', refit); window.addEventListener('orientationchange', refit);
+if (window.visualViewport) visualViewport.addEventListener('resize', refit);
+window.addEventListener('load', refit);
 
 // ---------- Main loop ----------
 let prev = performance.now(), acc = 0; const FRAME = 1000 / C.FPS;
@@ -141,5 +161,5 @@ function loop(now) {
 }
 fit(); requestAnimationFrame(loop);
 loadRoms().then(list => { if (list && list.length) { useFiles(list, false).then(ok => { if (!ok) $('overlay').hidden = false; }); } else $('overlay').hidden = false; }).catch(() => { $('overlay').hidden = false; });
-window.amidarArcade = { get machine() { return machine; }, direction4 };
+window.amidarArcade = { get machine() { return machine; }, direction4, fit };
 })();

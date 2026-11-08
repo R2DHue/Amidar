@@ -16,7 +16,10 @@ and runs the **original game code, graphics, colours and sound from your ROM set
 
 ## Controls
 - Touch: right 4-way joystick (strict, no diagonals, same design as the TI-83 build), left **JUMP**,
-  top bar COIN / 1P START / Pause / Sound / ROM.
+  top bar COIN / 1P START / Pause / Sound / Size / ROM.
+- **Size** button cycles Auto → 1× → 2× → 3× → 4× → 5× → Fill (remembered on this device).
+  Auto = largest whole-number pixel multiple that shows the entire board. A fixed size larger than fits is
+  capped and labelled (e.g. "4× (max 2× fits)"). Fill = largest non-integer size (slightly uneven pixels).
 - Keyboard: arrows or WASD, Space/X jump, 5 or C coin, 1 or Enter start, P pause.
 - Xbox controller (Gamepad API): D-pad or left stick (dead zone 0.4, dominant axis), A or B jump,
   View = coin, Menu = 1P start.

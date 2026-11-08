@@ -37,3 +37,7 @@ Screenshots: `test/screenshots/` (portrait-attract, portrait-play, landscape-pla
 - WebKit could not run on this box (missing system libraries), so no Safari-engine test was done here.
 - Listening test against MAME: the analog sound filters are not modelled.
 - Long play: later boards, the pig/bonus stages, high-score and game-over flows.
+
+## 2026-11-08 sizing fix
+Bug: in landscape the screen column was `auto`-sized by the canvas itself, and fit() measured that cell, so a fresh landscape load stayed at 1×. Fix: scale is computed from visualViewport minus toolbar/controls; re-fit on resize/orientation/visualViewport/load; Size button added.
+Fresh-load Chrome DPR2 results (Auto): 1024×576 → 2× (Fill 2.05×), 1024×768 → 2×, 1180×820 → 3×, 1366×1024 → 3×, 768×1024 → 3×, 820×1180 → 3×, 1024×1366 → 4×. Whole board inside viewport, controls on-screen, no errors, in all 7 (`test/sizes.cjs`).

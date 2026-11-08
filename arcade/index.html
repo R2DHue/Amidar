@@ -12,7 +12,7 @@ body{background:#000;color:#e8e8e8;font:14px system-ui,-apple-system,sans-serif;
 #bar{grid-area:bar;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:6px}
 #bar button,.btn{font:inherit;font-size:13px;color:#eee;background:#1d1d1d;border:1px solid #555;border-radius:10px;padding:8px 12px;touch-action:none}
 #bar button.on,.active{background:#3d4b3a!important}
-#screen{grid-area:screen;min-height:0;min-width:0;display:grid;place-items:center;overflow:hidden}
+#screen{grid-area:screen;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
 canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
 #controls{grid-area:controls;display:flex;justify-content:space-between;align-items:center;padding:8px 18px 14px;gap:10px}
 #jump{width:120px;height:120px;border-radius:50%;border:2px solid #6c7e64;background:radial-gradient(circle at 35% 28%,#53694e,#303e30);box-shadow:0 6px 0 #142019,0 8px 16px #0006;color:#eee;font:700 18px system-ui;letter-spacing:.05em;touch-action:none}
@@ -22,7 +22,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;backg
 #knob{position:absolute;z-index:2;left:49px;top:49px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 25%,#87987a,#4b6149);border:1px solid #99ab8b;box-shadow:0 3px 8px #0009;pointer-events:none}
 .arrow{position:absolute;z-index:1;color:#a9baa0;font-size:15px;pointer-events:none}.up{top:7px;left:65px}.down{bottom:7px;left:65px}.left{left:8px;top:62px}.right{right:8px;top:62px}
 @media (orientation:landscape){
- #app{grid-template-areas:"bar bar bar" "jumpc screen stickc";grid-template-columns:1fr auto 1fr;grid-template-rows:auto 1fr}
+ #app{grid-template-areas:"bar bar bar" "jumpc screen stickc";grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:auto 1fr}
  #controls{display:contents}#jump{grid-area:jumpc;justify-self:center;align-self:end;margin-bottom:40px}
  #stick{grid-area:stickc;justify-self:center;align-self:end;margin-bottom:30px}#mid{grid-area:jumpc;align-self:start;margin-top:20px;justify-self:center}
 }
@@ -34,7 +34,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;backg
 </head>
 <body>
 <main id="app">
- <nav id="bar"><button id="coin">COIN</button><button id="start1">1P START</button><button id="pause">Pause</button><button id="sound" class="on">Sound on</button><button id="romBtn">ROM…</button></nav>
+ <nav id="bar"><button id="coin">COIN</button><button id="start1">1P START</button><button id="pause">Pause</button><button id="sound" class="on">Sound on</button><button id="size">Size: Auto</button><button id="romBtn">ROM…</button></nav>
  <div id="screen"><canvas id="cv" width="224" height="256" aria-label="Amidar arcade screen"></canvas></div>
  <section id="controls"><button id="jump" aria-label="Jump">JUMP</button>
   <div id="stick" role="group" aria-label="Four-way joystick"><span class="arrow up">▲</span><span class="arrow down">▼</span><span class="arrow left">◀</span><span class="arrow right">▶</span><div id="knob"></div></div></section>
