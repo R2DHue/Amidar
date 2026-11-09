@@ -1,0 +1,604 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=7c482921-c737-4e55-ab3d-f805438f94b0
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Targ">
+<meta name="robots" content="noindex,nofollow">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<title>Targ</title>
+<style>
+html,body{margin:0;height:100%;height:100dvh;-webkit-text-size-adjust:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:-apple-system,sans-serif}
+#c{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:-webkit-optimize-contrast;image-rendering:pixelated;height:min(100vh,(100vw - 2*min(22vw,240px))*256/240);height:min(100dvh,(100vw - 2*min(22vw,240px))*256/240);aspect-ratio:240/256}
+#fx{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;height:min(100vh,(100vw - 2*min(22vw,240px))*256/240);height:min(100dvh,(100vw - 2*min(22vw,240px))*256/240);aspect-ratio:240/256}
+#fire{position:absolute;left:max(10px,env(safe-area-inset-left));bottom:max(4vh,env(safe-area-inset-bottom));width:min(16vw,150px);height:min(16vw,150px);border-radius:50%;background:rgba(230,40,40,.28);border:2px solid rgba(255,140,140,.55);color:rgba(255,255,255,.8);font:800 20px sans-serif;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+#fire.on{background:rgba(255,80,80,.55)}
+#hyper{position:absolute;left:calc(max(10px,env(safe-area-inset-left)) + min(3vw,28px));bottom:calc(max(4vh,env(safe-area-inset-bottom)) + min(16vw,150px) + 22px);width:min(10vw,94px);height:min(10vw,94px);border-radius:50%;--p:0deg;background:conic-gradient(rgba(140,120,255,.35) var(--p),rgba(255,255,255,.06) 0);border:2px solid rgba(170,160,255,.3);color:rgba(255,255,255,.55);font:700 12px sans-serif;display:flex;align-items:center;justify-content:center;opacity:.55}
+#hyper.ready{opacity:.75;border-color:rgba(190,180,255,.7);box-shadow:0 0 14px rgba(140,120,255,.45)}
+#hyper.on{background:rgba(170,150,255,.6)}
+#dpad{touch-action:none;position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(4vh,env(safe-area-inset-bottom));width:min(22vw,220px);height:min(22vw,220px)}
+#dpad>div{position:absolute;width:34%;height:34%;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.35);border-radius:14%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);font-size:min(4vw,34px)}
+#dpad>div.on{background:rgba(255,255,255,.45)}
+#dup{left:33%;top:0}#ddown{left:33%;bottom:0}#dleft{left:0;top:33%}#dright{right:0;top:33%}
+.btn{position:absolute;top:max(12px,env(safe-area-inset-top));font:700 15px sans-serif;background:#222c;color:#ddd;border:1px solid #666;border-radius:10px;padding:10px 16px}
+#coin{left:max(14px,env(safe-area-inset-left))}#start{left:calc(max(14px,env(safe-area-inset-left)) + 92px)}
+#start2{left:calc(max(14px,env(safe-area-inset-left)) + 205px)}
+#help{position:absolute;right:max(14px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));color:#777;font-size:12px;text-align:right}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:20px;background:#000c;z-index:9}
+</style></head><body>
+<canvas id="c" width="240" height="256"></canvas>
+<button class="btn" id="coin">COIN</button><button class="btn" id="start">1P START</button><button class="btn" id="start2">2P</button><button class="btn" id="snd" style="left:calc(max(14px,env(safe-area-inset-left)) + 262px)">🔊</button>
+<div id="help">Keys: arrows / WASD move · Space fire · H hyperspace<br>5 coin · 1 / 2 start · P pause · 🔊 sound</div>
+<canvas id="fx" width="720" height="768"></canvas>
+<div id="fire">FIRE</div>
+<div id="hyper"><span id="hyt">HYPER</span></div>
+<div id="dpad"><div id="dup">▲</div><div id="dleft">◀</div><div id="dright">▶</div><div id="ddown">▼</div></div>
+<div id="msg">Loading…</div>
+<script>// Compact NMOS 6502 core (documented opcodes) - written for this project
+function CPU6502(read, write){
+  const c=this; c.read=read; c.write=write;
+  c.a=0;c.x=0;c.y=0;c.s=0xfd;c.pc=0;c.p=0x24;c.cycles=0;c.irqLine=false;
+  const C=1,Z=2,I=4,D=8,B=16,V=64,N=128;
+  const nz=v=>{c.p=(c.p&~(N|Z))|(v&N)|(v?0:Z);return v;};
+  const rd=a=>c.read(a&0xffff), wr=(a,v)=>c.write(a&0xffff,v&255);
+  const rw=a=>rd(a)|(rd(a+1)<<8);
+  const push=v=>{wr(0x100|c.s,v);c.s=(c.s-1)&255;}, pop=()=>{c.s=(c.s+1)&255;return rd(0x100|c.s);};
+  c.reset=()=>{c.pc=rw(0xfffc);c.s=0xfd;c.p|=I;};
+  c.interrupt=(vec,brk)=>{push(c.pc>>8);push(c.pc&255);push((c.p|0x20)&~B|(brk?B:0));c.p|=I;c.pc=rw(vec);c.cycles+=7;};
+  // addressing
+  let ea=0,extra=0;
+  const imm=()=>{ea=c.pc;c.pc=(c.pc+1)&0xffff;}, zp=()=>{ea=rd(c.pc);c.pc=(c.pc+1)&0xffff;},
+  zpx=()=>{ea=(rd(c.pc)+c.x)&255;c.pc=(c.pc+1)&0xffff;}, zpy=()=>{ea=(rd(c.pc)+c.y)&255;c.pc=(c.pc+1)&0xffff;},
+  abs=()=>{ea=rw(c.pc);c.pc=(c.pc+2)&0xffff;},
+  abx=()=>{const b=rw(c.pc);c.pc=(c.pc+2)&0xffff;ea=(b+c.x)&0xffff;if((b^ea)&0x100)extra=1;},
+  aby=()=>{const b=rw(c.pc);c.pc=(c.pc+2)&0xffff;ea=(b+c.y)&0xffff;if((b^ea)&0x100)extra=1;},
+  izx=()=>{const z=(rd(c.pc)+c.x)&255;c.pc=(c.pc+1)&0xffff;ea=rd(z)|(rd((z+1)&255)<<8);},
+  izy=()=>{const z=rd(c.pc);c.pc=(c.pc+1)&0xffff;const b=rd(z)|(rd((z+1)&255)<<8);ea=(b+c.y)&0xffff;if((b^ea)&0x100)extra=1;},
+  ind=()=>{const p=rw(c.pc);c.pc=(c.pc+2)&0xffff;ea=rd(p)|(rd((p&0xff00)|((p+1)&255))<<8);};
+  const adc=v=>{ if(c.p&D){let lo=(c.a&15)+(v&15)+(c.p&C),hi=(c.a>>4)+(v>>4);if(lo>9){lo+=6;hi++;}
+      const bin=(c.a+v+(c.p&C))&255; c.p=(c.p&~(Z|N|V|C))|(bin?0:Z)|((hi<<4)&N)|((~(c.a^v)&(c.a^(hi<<4))&0x80)?V:0);
+      if(hi>9)hi+=6; if(hi>15)c.p|=C; c.a=((hi<<4)|(lo&15))&255; }
+    else{const r=c.a+v+(c.p&C);c.p=(c.p&~(V|C))|(r>255?C:0)|((~(c.a^v)&(c.a^r)&0x80)?V:0);c.a=nz(r&255);} };
+  const sbc=v=>{ if(c.p&D){const cin=c.p&C;let lo=(c.a&15)-(v&15)-(1-cin),hi=(c.a>>4)-(v>>4);
+      const r=c.a-v-(1-cin);if(lo<0){lo-=6;hi--;} if(hi<0)hi-=6;
+      c.p=(c.p&~(V|C))|(r>=0?C:0)|(((c.a^v)&(c.a^r)&0x80)?V:0);nz(r&255);c.a=((hi<<4)|(lo&15))&255;}
+    else adc(v^255); };
+  const cmp=(r,v)=>{const t=r-v;c.p=(c.p&~C)|(t>=0?C:0);nz(t&255);};
+  const br=cond=>{const o=rd(c.pc);c.pc=(c.pc+1)&0xffff;if(cond){const n=(c.pc+(o<128?o:o-256))&0xffff;c.cycles+=((n^c.pc)&0x100)?2:1;c.pc=n;}};
+  const rmw=(f)=>{const v=rd(ea);wr(ea,f(v));};
+  const asl=v=>{c.p=(c.p&~C)|(v>>7);return nz((v<<1)&255);}, lsr=v=>{c.p=(c.p&~C)|(v&1);return nz(v>>1);},
+  rol=v=>{const r=((v<<1)|(c.p&C))&255;c.p=(c.p&~C)|(v>>7);return nz(r);}, ror=v=>{const r=(v>>1)|((c.p&C)<<7);c.p=(c.p&~C)|(v&1);return nz(r);};
+  const M={imm,zp,zpx,zpy,abs,abx,aby,izx,izy};
+  const T=new Array(256);
+  const def=(ops,fn,pagepen)=>{for(const [op,mode,cyc] of ops)T[op]=()=>{extra=0;M[mode]();fn();c.cycles+=cyc+(pagepen?extra:0);};};
+  const ALU=[['ora',0x00],['and',0x20],['eor',0x40],['adc',0x60],['sta',0x80],['lda',0xa0],['cmp',0xc0],['sbc',0xe0]];
+  const modes=[[0x09,'imm',2],[0x05,'zp',3],[0x15,'zpx',4],[0x0d,'abs',4],[0x1d,'abx',4],[0x19,'aby',4],[0x01,'izx',6],[0x11,'izy',5]];
+  const af={ora:()=>{c.a=nz(c.a|rd(ea));},and:()=>{c.a=nz(c.a&rd(ea));},eor:()=>{c.a=nz(c.a^rd(ea));},adc:()=>adc(rd(ea)),
+    sta:()=>wr(ea,c.a),lda:()=>{c.a=nz(rd(ea));},cmp:()=>cmp(c.a,rd(ea)),sbc:()=>sbc(rd(ea))};
+  for(const [n,base] of ALU)for(const [o,m,cy] of modes){ if(n==='sta'&&m==='imm')continue;
+    let cyc=cy; if(n==='sta'){ if(m==='abx'||m==='aby')cyc=5; if(m==='izy')cyc=6; }
+    def([[base+(o&0x1f),m,cyc]],af[n],n!=='sta'); }
+  def([[0xa2,'imm',2],[0xa6,'zp',3],[0xb6,'zpy',4],[0xae,'abs',4],[0xbe,'aby',4]],()=>{c.x=nz(rd(ea));},1);
+  def([[0xa0,'imm',2],[0xa4,'zp',3],[0xb4,'zpx',4],[0xac,'abs',4],[0xbc,'abx',4]],()=>{c.y=nz(rd(ea));},1);
+  def([[0x86,'zp',3],[0x96,'zpy',4],[0x8e,'abs',4]],()=>wr(ea,c.x));
+  def([[0x84,'zp',3],[0x94,'zpx',4],[0x8c,'abs',4]],()=>wr(ea,c.y));
+  def([[0xe0,'imm',2],[0xe4,'zp',3],[0xec,'abs',4]],()=>cmp(c.x,rd(ea)));
+  def([[0xc0,'imm',2],[0xc4,'zp',3],[0xcc,'abs',4]],()=>cmp(c.y,rd(ea)));
+  def([[0x24,'zp',3],[0x2c,'abs',4]],()=>{const v=rd(ea);c.p=(c.p&~(N|V|Z))|(v&(N|V))|((v&c.a)?0:Z);});
+  const shifts=[[0x00,asl],[0x20,rol],[0x40,lsr],[0x60,ror]];
+  for(const [b,f] of shifts){ T[b+0x0a]=()=>{c.a=f(c.a);c.cycles+=2;};
+    def([[b+0x06,'zp',5],[b+0x16,'zpx',6],[b+0x0e,'abs',6],[b+0x1e,'abx',7]],()=>rmw(f)); }
+  def([[0xe6,'zp',5],[0xf6,'zpx',6],[0xee,'abs',6],[0xfe,'abx',7]],()=>rmw(v=>nz((v+1)&255)));
+  def([[0xc6,'zp',5],[0xd6,'zpx',6],[0xce,'abs',6],[0xde,'abx',7]],()=>rmw(v=>nz((v-1)&255)));
+  const imp=(op,cy,f)=>T[op]=()=>{f();c.cycles+=cy;};
+  imp(0xe8,2,()=>{c.x=nz((c.x+1)&255);});imp(0xca,2,()=>{c.x=nz((c.x-1)&255);});
+  imp(0xc8,2,()=>{c.y=nz((c.y+1)&255);});imp(0x88,2,()=>{c.y=nz((c.y-1)&255);});
+  imp(0xaa,2,()=>{c.x=nz(c.a);});imp(0x8a,2,()=>{c.a=nz(c.x);});imp(0xa8,2,()=>{c.y=nz(c.a);});imp(0x98,2,()=>{c.a=nz(c.y);});
+  imp(0xba,2,()=>{c.x=nz(c.s);});imp(0x9a,2,()=>{c.s=c.x;});
+  imp(0x48,3,()=>push(c.a));imp(0x68,4,()=>{c.a=nz(pop());});imp(0x08,3,()=>push(c.p|0x30));imp(0x28,4,()=>{c.p=(pop()&~B)|0x20;});
+  imp(0x18,2,()=>{c.p&=~C;});imp(0x38,2,()=>{c.p|=C;});imp(0x58,2,()=>{c.p&=~I;});imp(0x78,2,()=>{c.p|=I;});
+  imp(0xb8,2,()=>{c.p&=~V;});imp(0xd8,2,()=>{c.p&=~D;});imp(0xf8,2,()=>{c.p|=D;});imp(0xea,2,()=>{});
+  T[0x4c]=()=>{c.pc=rw(c.pc);c.cycles+=3;}; T[0x6c]=()=>{ind();c.pc=ea;c.cycles+=5;};
+  T[0x20]=()=>{const t=rw(c.pc);const r=(c.pc+1)&0xffff;push(r>>8);push(r&255);c.pc=t;c.cycles+=6;};
+  T[0x60]=()=>{const lo=pop(),hi=pop();c.pc=(((hi<<8)|lo)+1)&0xffff;c.cycles+=6;};
+  T[0x40]=()=>{c.p=(pop()&~B)|0x20;const lo=pop(),hi=pop();c.pc=(hi<<8)|lo;c.cycles+=6;};
+  T[0x00]=()=>{c.pc=(c.pc+1)&0xffff;c.interrupt(0xfffe,true);};
+  const brs=[[0x10,()=>!(c.p&N)],[0x30,()=>c.p&N],[0x50,()=>!(c.p&V)],[0x70,()=>c.p&V],[0x90,()=>!(c.p&C)],[0xb0,()=>c.p&C],[0xd0,()=>!(c.p&Z)],[0xf0,()=>c.p&Z]];
+  for(const [op,f] of brs)T[op]=()=>{c.cycles+=2;br(f());};
+  c.bad=0;
+  c.step=()=>{ if(c.irqLine&&!(c.p&I)){c.interrupt(0xfffe,false);return;}
+    const op=rd(c.pc);c.pc=(c.pc+1)&0xffff;const f=T[op]; if(f)f(); else {c.bad++;c.cycles+=2;} };
+}
+if(typeof module!=='undefined')module.exports=CPU6502;
+</script><script>// Exidy "Targ" board emulation (original JS, hardware behaviour per MiSTer Exidy2 docs / schematics)
+function TargMachine(roms){ // roms: {prog: Uint8Array(0x2800) for 0x1800-0x3fff, sprites: Uint8Array(0x400)}
+  const m=this;
+  const ram=new Uint8Array(0x400), vram=new Uint8Array(0x400), cram=new Uint8Array(0x800);
+  m.ram=ram;m.vram=vram;m.cram=cram;
+  m.s1x=0;m.s1y=0;m.s2x=0;m.s2y=0;m.mol=0;m.cpl=0;m.eir=0xff;
+  // DIP 16A per Targ Operator's Manual 1.0 (switch N = bit N-1, OFF = 1):
+  // sw1 unused(coin B idle)=1, sw2 English-only=OFF, sw3 ON=credit for topping score,
+  // sw4 OFF/sw5 ON = 1 player-1 coin, sw6 ON/sw7 OFF = 3 Wummels, sw8 OFF = quarters
+  m.dip=0xCB;
+  m.inp={coin:0,start1:0,start2:0,up:0,down:0,left:0,right:0,fire:0};
+  m.sndWrites=[];
+  const prog=roms.prog, spr=roms.sprites;
+  function esr(){const i=m.inp;return ((!i.coin)<<7)|((!i.down)<<6)|((!i.up)<<5)|((!i.fire)<<4)|((!i.left)<<3)|((!i.right)<<2)|((!i.start2)<<1)|(!i.start1)|0;}
+  function read(a){
+    if(a<0x400)return ram[a];
+    if(a>=0x1800&&a<0x4000)return prog[a-0x1800];
+    if(a>=0xf800)return prog[a-0xf800+0x2000];
+    if(a>=0x4000&&a<0x4800)return vram[a&0x3ff];
+    if(a>=0x4800&&a<0x5000)return cram[a&0x7ff];
+    if(a>=0x5100&&a<0x5200){switch(a&3){case 0:return m.dip;case 1:return esr();case 3:m.cpu.irqLine=false;return m.eir;default:return 0xff;}}
+    if(a>=0x5200&&a<0x5210)return m.sndRead?m.sndRead(a):0;
+    if(a===0x5213)return 0x04;
+    return 0xff;
+  }
+  function write(a,v){
+    if(a<0x400){ram[a]=v;return;}
+    if(a>=0x4000&&a<0x4800){vram[a&0x3ff]=v;return;}
+    if(a>=0x4800&&a<0x5000){cram[a&0x7ff]=v;return;}
+    if(a>=0x5000&&a<0x5100){switch(a&0xc0){case 0:m.s1x=v;break;case 0x40:m.s1y=v;break;case 0x80:m.s2x=v;break;case 0xc0:m.s2y=v;break;}return;}
+    if(a>=0x5100&&a<0x5200){if((a&3)===0)m.mol=v;else if((a&3)===1)m.cpl=v;return;}
+    if(a>=0x5200&&a<0x5300){if(m.sndWrite)m.sndWrite(a,v);return;}
+  }
+  m.cpu=new CPU6502(read,write);
+  m.reset=()=>{m.cpu.reset();};
+  const CYC=Math.round(11289000/16/60);
+  let prevCoin=0;
+  m.frame=()=>{
+    const cpu=m.cpu;
+    // coin edge raises an interrupt too
+    if(m.inp.coin&&!prevCoin){m.eir=0x80|0x40|0x1f; m.cpu.irqLine=true;}
+    prevCoin=m.inp.coin;
+    const end=cpu.cycles+CYC;
+    const vbAt=cpu.cycles+Math.round(CYC*256/280);
+    let vbDone=false;
+    while(cpu.cycles<end){
+      if(!vbDone&&cpu.cycles>=vbAt){vbDone=true; m.eir=(0<<7)|((m.inp.coin?1:0)<<6)|0x1f; cpu.irqLine=true;}
+      cpu.step();
+    }
+  };
+  // palette: index 0 sprite1, 1 sprite2, 3..6 char sets, 7 bg
+  // Targ colour adapter jumpers (Outerworld Arcade table): ship green, missile white,
+  // chars $00-3F red, $40-7F cyan, $80-BF yellow, $C0-FF cyan, background blue
+  m.palette=[[0,255,0],[255,255,255],[0,0,0],[0,255,255],[255,255,0],[0,255,255],[255,0,0],[0,0,255]];
+  m.render=(img)=>{ // img: Uint32Array 256*256 ABGR
+    const pal=m.palette.map(([r,g,b])=>0xff000000|(b<<16)|(g<<8)|r);
+    for(let ty=0;ty<32;ty++)for(let tx=0;tx<32;tx++){
+      const code=vram[ty*32+tx], col=pal[6-(code>>6)], bg=pal[7];
+      for(let r=0;r<8;r++){const bits=cram[code*8+r];let o=(ty*8+r)*256+tx*8;
+        for(let b=0;b<8;b++)img[o+b]=(bits&(0x80>>b))?col:bg;}
+    }
+    const drawS=(code,xp,yp,c)=>{const sx=236-xp-4, sy=244-yp-4;
+      for(let half=0;half<2;half++)for(let r=0;r<16;r++){const bits=spr[(code&31)*32+half*16+r];
+        const y=sy+r; if(y<0||y>255)continue;
+        for(let b=0;b<8;b++){const x=sx+half*8+b; if(x<0||x>255)continue; if(bits&(0x80>>b))img[y*256+x]=c;}}};
+    drawS((m.mol>>4)|((m.cpl&0x40)?16:0),m.s2x,m.s2y,pal[1]);
+    if(m.extra)for(const [c,x,y] of m.extra)drawS(c,x,y,pal[1]);
+    if(!m.hideP)drawS((m.mol&15)|((m.cpl&0x20)?16:0),m.s1x,m.s1y,pal[0]);
+  };
+}
+if(typeof module!=='undefined')module.exports=TargMachine;
+</script><script>const ROMS={"hrl_10a1.10a": "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", "hrl_9a1.9a": "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", "hrl_8a1.8a": "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", "hrl_7a4.7a": "eKL/mq0DUcow+tipAIWghaGFolggvCKpAIWrhaOFvYW+ha6pEIWvIAwYIAYYTIMzeKL/mlipAIW9hb6F3IXdqQGFv4XDINcjIAwYIAYYIHEZIDsqIAYYpbGFqKkAhaSpkIWjjQBSqSCFNYU2IJksIAczIAAgIIggIK4gIHUaIMQZIC8gIJcqIBEuICgYpbHwDeqlMCkC8NQgbjFMbDCp7o0AUSCMI6kQjQBSpr/KIAAYIIwjqe6NAFGFGiDyHCBNGUxsMKkQjQBSqe6NAFEgjCOlpykD0AfqIBgZTIMzrQBRSf8pBNBT6iSncOwgQCOlpykDhb/w4UqqqQGV1qAAqQSFEKlChRG5Sh+FFMi5Sh+FFSD+IqkshRDIIAAjpb8JMI0dQiCGIyCGI6WnCUCFp6W/SqogFBhMnjAgQCMg6ivmoakLhRCpQoURoAC5TB+FFMi5TB+FFSD+IsipOIUQIAAjIIYjIOorIIYjTNgwqRAgzyOp7o0AUSAIHqUv0AfqqQqFL4WxxsEQBeqpAIXBpcDJAtAk6qW/yQHwEOqpAYW/IAYYICAYpcHQFuqpAoW/IAwYIBoYTLwxIAwYpcHwDuogQCMgISQgcRkgOypgTMQwCEiKSJhIrQNRqClg0A/qmBAI6mioaKpoKEBMTT+loskGkPAgeTKw65hIpRRIpRVIpRBIpRFIqQCFoiwAUTBC6q0BA8lA0BvqrQBRSf8pAtAO6uagpaDJApA96qkAhaBMWDKtAFFJ/ykC0ArqIO4yIO4yTFgyIO4yIO4yIO4yTD0yLAEDMBHqIO4ykAvqJKcwBuqgEiATG2iFEWiFEGiFFWiFFGioTOQxqQWNAAMsAVEQFeqtAFEpAdA16s4AA9DoqQCNAQM4YKn/jQADLAFRMNfOAAPQ9iwBURD7zgADLAFREPPOAAPQ9qlAjQEDGGCp/40AA60AUSkB8K3OAAPQ9K0AUSkB0PnOAAOtAFEpAdDvzgAD0PSpgI0BAxhgrQBRKRjJENAL6uagpaDJArAC6mAg1ys4YKIHtZaVC8oQ+cYPEBfqpbDJCJAG6qkCTCgzSf8pBxhpAiAHLaIHtQuVlsoQ+SSnEDHqJAwwLOokDTAn6qWXKUDQAupgqe8gyiPuDwOtDwMpQNAb6qWjKQjwAupgqQggzyNgpaMp8AkQhaONAFJgpaMpCNAC6mCp9yDKI2Cp7o0AUYUaIG0kqRCFo40AUqkAhacgQCMguhipH4UXIE8rqSqFQYVCpaHQQOrmP9DuxhfQ6iAyHqkNhRcgmSwgBzMgbjQgiCAgriAguBogLyAgdi4gES6lodClpTApAtCfxj/Q18YX0NNMgzOtBVFJ/ykDyQHwROrJAvAm6sYW0KfGQdCjqQGFQaIKrQ1CySDwCeqpIJ0NQsoQ+sZC0IlMojOtAFEpGMkY8A7qpaHJArAE6kyiMyA6GakChcAgOhmpC4UvqQqFsakDhSggQCOpAYW/qYCFp6AWpcDJAvAD6qASIBMbICEkTDAwpT8pH8kP0AvqIKQjhQApSdAG6qkAhTRgpQApA6q96B+FNKUAKRAFNIU0Ke+FNWBUDRAwIEFDVElWRT0kMDBCMSA7TlVNQkVSIE9GIEFDVElWRSBBUlJPV1MNEEAgU01PVkU9JDAwQjIgO1NNQVJUIE1PVkUgQ09ERQ0QUCBGU0hDTlQ9JDAwQjMgO0ZMQVNIIENPVU5URVINEGAgRlNDUk49JDAwQjQgO0ZMQVNIIFNDUkVFTiBMT0NBVElPTg0QcCBDQUJUTT0kMDBCNiA7Q0FSIEJBU0UgVElNRVINEIAgQ0FSQ0FMPSQwMEI3IDtDQVIgQ0FMRU5EQVINEJAgT0JKQ1RSPSQwMEI4IDtTUEVDSUFMIE9CSkVDVCBDT1VOVEVSDREAIEZJTUFHPSQwMEI5IDtGTEFTSElORyBJTUFHRQ0RECBUUE9JTlQ9JDAwQkMgO1RZUEUgT0YgUE9JTlQgVE8gQkUgQVdBUkRFRCAoQVJST1ctU1BFQyBUQVJHKQ0RICBQTFlSU0M9JDAwQkQgO1BMQVlFUiBTQ09SRSAoMiBCWVRFUykNETAgUExZTj0kMDBCRiA7UExBWUVSIE5VTUJFUg0RQCBOUExZUlM9JDAwQzAgO05VTUJFUiBPRiBQTEFZRVJTICgxIE9SIDIpDRFQIE5DQVJTPSQwMEMxIDtOVU1CRVIgT0YgQ0FSUyBQRVIgR0FNRQ0RYCBCQ0FMTj0kMDBDMiA7QlVMTEVUIENBTEVOREFSDRFwIE5QT0lOVD0kMDBDMyA7TlVNQkVSIE9GIFBPSU5UUyBQRVIgQVJST1cNEYAgU0NPUkUxPSQwMEQwIDtTQ09SRSBTVE9SQUdFDRGQIFNDT1IxMT0kMDBEMiA7SC5PLiBTQ09SRSBTVE9SQUdFDRIAIEFDVElWMT0kMDBENCA7TlVNQkVSIE9GIEFDVElWRSBBUlJPV1MgU1RPUkFHRQ0SECBOQ0FSUzE9JDAwRDYgO05VTUJFUiBPRiBDQVJTIExFRlQgU1RPUkFHRQ0SICBOU0ZJUlM9JDAwRDggO05VTUJFUiBPRiBUSU1FUyBGSVJFRCBBVCBTUEVDSUFMIFRBUkdFVA0SMCBOUE9JVFM9JDAwREEgO05VTUJFUiBPRiBQT0lOVFMgUEVSIEFSUk9XDRJAIEhTQ09STj0kMDBEQyA7SElHSCBTQ09SRSBOVU1CRVINElA=", "hrl_6a3.6a": "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", "hrl_11d-1.11d": "PKX/vTy9/70AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC9/708vf+lPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAO5E//39/0TuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAdyL/v7//IncAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYGDwkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkPBgYGBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgPj5gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZ8fAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwMHBwMGAAAAAAAAAAAAgMDw4OCwgEAAAAAAAAAIBBIIBQcjGQIECBAAAAAQICAgRIgA4JhGIACIBAAAAAABAw8fDx8/CwMBAAAAAAAAAEDY8MD48OCggAAAAAABDR98NW83H3p9Jw8FAAAg8Pi82Hyu3Oje/lzowEAAAAMv/vpgMWfj6VNwej8dGMDg9LY8HsbP5s7jpg8m/DAAAgAQBFAAIwEASAEQBAAQAAKQBCAE4fD68KhSAIogAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/fz8/Pz9//wAAAAAAAAAA+Oz29vb27PgAAAAAAAAAAQEBAQEBAQEBAQEBAQB4/IZ6/v7+/v7+/v7+hgIAAAAAHzdvb29vNx8AAAAAAAAAAP/+/Pz8/P7/AAAAAAEBAQEBAQEBAQEBAQEAAAAChv7+/v7+/v7+/nqG/HgAAAAAAAAHAwcHAwYAAAAAAAAAAACAwPDg4LCAQAAAAAAAAAgEEggFByMZAgQIEAAAABAgICBEiADgmEYgAIgEAAAAAAEDDx8PHz8LAwEAAAAAAAAAQNjwwPjw4KCAAAAAAAENH3w1bzcfen0nDwUAACDw+LzYfK7c6N7+XOjAQAAAAy/++mAxZ+PpU3B6Px0YwOD0tjwexs/mzuOmDyb8MAACABAEUAAjAQBIARAEABAAApAEIATh8PrwqFIAiiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="};</script>
+<script>
+// ---- Sound: game events from the Targ sound port ($5200 bits: 7 GAME, 6 LONG explosion, 5 CRASH, 4 /SPEC,
+// 3 /WARN, 1 SHOOT, 0 MUSIC; $5201 tone steps) re-voiced with modern synthesized effects (all original code).
+const TONEPROM=[229, 229, 237, 237, 229, 229, 237, 237, 231, 231, 239, 239, 231, 231, 239, 239, 193, 225, 201, 233, 197, 229, 205, 237, 195, 227, 203, 235, 199, 231, 207, 239];
+function TargAudio(){
+  const A=this;let ctx=null,node=null,on=true;const RB=new Float32Array(32768);let wr=0,rd=0;
+  let s0=0x10,s1=0,u2a=0,mus=0,toneP=0,spec=false,specE=0,specP=0,specM=0,lastShoot=-1,tick=0,acc=0,hpX=0,hpY=0,mLP=0,tLP=0,sr=48000;
+  A.hold=false; // while true (Hyperspace / fanfare freeze) the game's own music & siren are silenced
+  const voices=[];const DL=new Float32Array(16384);let dw=0;
+  const TAU=Math.PI*2,nz=()=>Math.random()*2-1,mtof=n=>440*Math.pow(2,(n-69)/12);
+  // --- voice factories: each returns a per-sample function f(t) -> sample, or null when finished
+  const V={
+    shoot(){let p=0,p2=0;return t=>{if(t>0.22)return null;const f=2400*Math.exp(-t*20)+220;p+=f/sr;p2+=f*1.005/sr;
+      const saw=((p%1)*2-1)*0.5+((p2%1)*2-1)*0.5, s=Math.sin(TAU*p);
+      return (s*0.55+saw*0.25)*Math.exp(-t*13)*0.42+(t<0.012?nz()*0.25*(1-t/0.012):0);};},
+    crash(){let p=0,lp=0,b=0;return t=>{if(t>0.7)return null;const f=170*Math.exp(-t*11)+38;p+=f/sr;
+      const thump=Math.sin(TAU*p)*Math.exp(-t*7)*0.75;const a=0.45*Math.exp(-t*5)+0.015;lp+=(nz()-lp)*a;
+      b+=(t<0.07?(1300+t*18000):0)/sr;const blip=t<0.07?Math.sign(Math.sin(TAU*b))*0.12*(1-t/0.07):0;
+      return (thump+lp*0.9*Math.exp(-t*5.5)+blip)*0.5;};},
+    long(){let p=0,lp=0,lp2=0;return t=>{if(t>2.0)return null;const f=95*Math.exp(-t*1.8)+26;p+=f/sr;
+      const env=Math.min(1,t/0.02)*Math.exp(-t*1.5);lp+=(nz()-lp)*(0.25*Math.exp(-t*1.7)+0.01);lp2+=(lp-lp2)*0.3;
+      const crackle=Math.random()<0.004*Math.exp(-t*2)?nz()*0.8:0;
+      return (Math.sin(TAU*p)*0.8*env+lp2*1.3*Math.exp(-t*1.6)+crackle)*0.55;};},
+    warn(){let p=0;return t=>{if(t>0.44)return null;const k=Math.floor(t/0.14),u=t-k*0.14;if(u>0.1)return 0;
+      const f=k%2?1568:1046.5;p+=f/sr;const env=Math.min(1,u/0.005)*Math.exp(-u*18);
+      return (Math.sin(TAU*p)+0.25*Math.sin(3*TAU*p))*env*0.16;};},
+    hyper(){let p=0,q=0,bp1=0,bp2=0;return t=>{if(t>1.0)return null;
+      let f; if(t<0.45)f=140*Math.pow(24,t/0.45); else f=3400*Math.pow(0.06,(t-0.45)/0.55);
+      p+=f/sr;q+=f*1.502/sr;const env=t<0.45?Math.min(1,t/0.05):Math.exp(-(t-0.45)*3.2);
+      const cut=Math.min(0.9,f/6000);bp1+=(nz()-bp1)*cut;bp2+=(bp1-bp2)*cut;
+      return (Math.sin(TAU*p)*0.5+Math.sin(TAU*q)*0.22*Math.sin(TAU*t*18)+(bp1-bp2)*0.6)*env*0.32;};},
+    skid(){let p=0,lp=0,lp2=0;return t=>{if(t>0.75)return null; // tyre squeal: wobbling high tone over gritty road noise
+      const f=1750+140*Math.sin(TAU*t*23)-500*t;p+=f/sr;lp+=(nz()-lp)*0.35;lp2+=(lp-lp2)*0.08;
+      const env=Math.min(1,t/0.03)*(t<0.5?1:Math.exp(-(t-0.5)*12));
+      return (Math.sin(TAU*p)*0.22+((p%1)<0.5?0.06:-0.06)+(lp-lp2)*0.5)*env*0.5;};},
+    gameover(){ // slow, sad descending phrase ending on a long low note
+      const N=[[0,.32,67],[.36,.32,64],[.72,.32,60],[1.08,1.3,55],[1.08,1.3,43]],ph=new Float64Array(N.length);let lp=0;
+      return t=>{if(t>2.8)return null;let x=0;
+        for(let i=0;i<N.length;i++){const [st,d,n]=N[i];const u=t-st;if(u<0||u>d+0.4)continue;ph[i]+=mtof(n)*(1+0.006*Math.sin(TAU*5*u))/sr;
+          const env=Math.min(1,u/0.015)*(u<d?1-0.3*u/d:0.7*Math.exp(-(u-d)*7));x+=(((ph[i]%1)<0.5?1:-1)*0.5+Math.sin(TAU*ph[i])*0.5)*env*0.16;}
+        lp+=(x-lp)*0.22;return lp*1.4;};},
+    fanfare(){ // bright synth-brass fanfare + bell sparkle (C major)
+      const N=[[0,.12,72],[.13,.12,76],[.26,.12,79],[.39,.30,84],[.72,.10,81],[.84,.10,84],[.96,1.5,88],[.96,1.5,84],[.96,1.5,79],[.96,1.5,72],[.96,1.5,60]];
+      const B=[[1.05,96],[1.17,100],[1.29,103],[1.41,108],[1.6,103],[1.75,108]];
+      const ph=new Float64Array(N.length*2),bph=new Float64Array(B.length);let lp=0;
+      return t=>{if(t>2.7)return null;let x=0;
+        for(let i=0;i<N.length;i++){const [st,d,n]=N[i];const u=t-st;if(u<0||u>d+0.35)continue;const f=mtof(n);
+          ph[i*2]+=f*1.004/sr;ph[i*2+1]+=f*0.996/sr;const vib=u>0.3?1+0.004*Math.sin(TAU*5.5*u):1;
+          const saw=((ph[i*2]*vib)%1*2-1)+((ph[i*2+1])%1*2-1);
+          const env=Math.min(1,u/0.012)*(u<d?(1-0.25*Math.min(1,u/0.2)):0.75*Math.exp(-(u-d)*9));x+=saw*env*0.11;}
+        lp+=(x-lp)*(0.18+0.25*Math.exp(-t*1.5));let y=lp;
+        for(let i=0;i<B.length;i++){const [st,n]=B[i];const u=t-st;if(u<0||u>1)continue;bph[i]+=mtof(n)/sr;y+=Math.sin(TAU*bph[i])*Math.exp(-u*5)*0.07;}
+        return y*1.35;};}
+  };
+  A.play=name=>{if(!ctx)return;const f=V[name]();voices.push({f,t:0,dry:name==='fanfare'?0.85:1});};
+  // recorded sound files (decoded once audio is unlocked; resampled to the device rate by the browser)
+  const S={};let specMute=0;
+  const decode=k=>{const s=S[k];if(!ctx||!s||!s.ab||s.busy)return;s.busy=true;
+    const ok=b=>{s.data=b.getChannelData(0);s.ab=null;},bad=()=>{s.failed=true;s.ab=null;};
+    try{const r=ctx.decodeAudioData(s.ab.slice(0),ok,bad);if(r&&r.catch)r.catch(bad);}catch(e){bad();}};
+  A.load=(k,url,gain)=>{S[k]={gain};return fetch(url).then(r=>r.arrayBuffer()).then(ab=>{S[k].ab=ab;decode(k);}).catch(()=>{S[k].failed=true;});};
+  // try a list of possible file names (first one that exists wins); stays on the synthesized fallback if none do
+  A.loadAny=async(k,urls,gain)=>{S[k]={gain};for(const u of urls){try{const r=await fetch(u);if(!r.ok)continue;
+      const ct=r.headers.get('content-type')||'';if(ct.includes('text/html'))continue;S[k].ab=await r.arrayBuffer();decode(k);return;}catch(e){}}
+    S[k].failed=true;};
+  // play a recorded sound; falls back to a synthesized voice if the file could not be loaded/decoded
+  // returns the voice so it can be faded out early with A.stop(voice)
+  A.sample=(k,fallback)=>{if(!ctx)return null;const s=S[k];
+    if(s&&s.data){const d=s.data,g=s.gain;let i=0;const vo={f:()=>i<d.length?d[i++]*g*vo.amp:null,t:0,dry:1,clean:true,amp:1};voices.push(vo);return vo;}
+    if(fallback){A.play(fallback);return voices[voices.length-1];}return null;};
+  A.stop=vo=>{if(!vo||vo.fade)return;vo.fade=true;const f=vo.f;let g=1;vo.f=t=>{g-=1/(sr*0.08);if(g<=0)return null;const s=f(t);return s===null?null:s*g;};};
+  // the player's car was hit: play the Crash sound, and keep the game's own explosion/"enemy destroyed"
+  // effects quiet while the car's death plays out (it is the player who died, not an enemy)
+  // on the last car the Game Over sound replaces the Crash sound and rings on through the END OF GAME screen
+  let deathMute=0;A.playerDeath=last=>{deathMute=tick+Math.round(sr*(last?4:2.5));A.sample(last?'gameover':'crash',last?'gameover':'crash');};
+  A.muteSpec=sec=>{specMute=tick+Math.round(sec*sr);};
+  A.unlock=()=>{if(!ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;ctx=new C();sr=ctx.sampleRate;
+      node=ctx.createScriptProcessor(2048,0,1);node.onaudioprocess=e=>{const o=e.outputBuffer.getChannelData(0);
+        for(let i=0;i<o.length;i++){if(rd!==wr){o[i]=on?RB[rd]:0;rd=(rd+1)&32767;}else o[i]=0;}};
+      node.connect(ctx.destination);for(const k in S)decode(k);const b=ctx.createBuffer(1,1,22050),sN=ctx.createBufferSource();sN.buffer=b;sN.connect(ctx.destination);sN.start(0);}
+    try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
+    if(ctx.state!=='running')ctx.resume();};
+  A.toggle=()=>{on=!on;return on;};
+  function w(a,v,t){
+    if((a&1)===0){const r=v&~s0,f=s0&~v;
+      if(r&2){if(t-lastShoot>0.05){A.play('shoot');}lastShoot=t;}
+      // CRASH+LONG rising together = an enemy destroyed (player deaths raise LONG first, then CRASH)
+      if(tick>=deathMute){if((r&0x60)===0x60)A.sample('kill','crash'); else{if(r&0x20)A.play('crash'); if(r&0x40)A.play('long');}} if(r&0x08)A.play('warn');
+      if(f&0x80)u2a=0; spec=!(v&0x10)&&!!(v&0x80); mus=v&1; s0=v;}
+    else{ if((v&1)&&!(s1&1)&&(s0&0x80))u2a=(u2a+1)&15; s1=v; }
+  }
+  A.frame=(ev,cyc)=>{ if(!ctx)return; acc+=sr/60; const n=Math.floor(acc); acc-=n;
+    const buffered=(wr-rd+32768)&32767; if(buffered>sr*0.25){for(const e of ev)w(e[1],e[2],tick/sr);return;} let ei=0;
+    for(let k=0;k<n;k++){const c=k*cyc/n; while(ei<ev.length&&ev[ei][0]<=c){w(ev[ei][1],ev[ei][2],tick/sr);ei++;}
+      tick++; let x=0,fx=0,cl=0;
+      if(!A.hold){
+        // game music: 1-bit line + tone generator, softened through low-pass filters into a mellow synth tone
+        mLP+=(((mus?1:-1)*0.14)-mLP)*0.08; x+=mLP;
+        if((s0&0x80)&&(s1&1)){const div=256-TONEPROM[((s1&2)<<3)|u2a];const f=9938/div/2;toneP=(toneP+f/sr)%1;
+          const tri=4*Math.abs(toneP-0.5)-1;tLP+=((tri*0.15+(toneP<0.5?0.04:-0.04))-tLP)*0.3;} else tLP*=0.995;
+        x+=tLP;
+      }
+      // special-target alert: modern pulsing FM arpeggio while active
+      const sOn=spec&&!A.hold&&tick>=specMute; specE+=((sOn?1:0)-specE)*0.002;
+      if(specE>0.001){const st=tick/sr;const step=[1,1.26,1.5,2][Math.floor(st*10)%4];const f=523*step;
+        specM+=f*2/sr;specP+=f/sr;const gate=0.5+0.5*Math.cos(TAU*((st*10)%1));
+        fx+=Math.sin(TAU*specP+1.2*Math.sin(TAU*specM))*gate*specE*0.09;}
+      for(let i=voices.length-1;i>=0;i--){const vo=voices[i];const s=vo.f(vo.t);vo.t+=1/sr;if(s===null){voices.splice(i,1);continue;}if(vo.clean)cl+=s;else fx+=s*vo.dry;}
+      // short stereo-less echo for a modern "space" feel on effects
+      const di=(dw-Math.floor(sr*0.15)+16384)&16383;const echo=DL[di];DL[dw]=fx+echo*0.32;dw=(dw+1)&16383;
+      x+=fx+echo*0.28+cl;
+      hpY=0.995*(hpY+x-hpX);hpX=x; RB[wr]=Math.tanh(hpY*1.15);wr=(wr+1)&32767;}
+  };
+}
+
+(async()=>{
+const msg=document.getElementById('msg');
+try{
+const get=async n=>Uint8Array.from(atob(ROMS[n]),c=>c.charCodeAt(0));
+const prog=new Uint8Array(0x2800);
+const parts=[['hrl_10a1.10a',0],['hrl_9a1.9a',0x800],['hrl_8a1.8a',0x1000],['hrl_7a4.7a',0x1800],['hrl_6a3.6a',0x2000]];
+for(const [n,o] of parts)prog.set(await get(n),o);
+const m=new TargMachine({prog,sprites:await get('hrl_11d-1.11d')});m.reset();window.m=m;
+const au=new TargAudio();window.au=au;
+au.load('kill','sounds/btr.flac',0.85);au.load('hyper','sounds/defstart.wav',0.7);au.load('spectar','sounds/df4.wav',0.7);au.load('freeman','sounds/deffreem.wav',0.6);
+const names=(...b)=>b.flatMap(n=>['wav','mp3','m4a','flac','ogg','aiff','aif'].map(e=>`sounds/${n}.${e}`));
+au.loadAny('skid',names('Skid','skid'),0.75);au.loadAny('crash',names('Crash','crash'),0.85);au.loadAny('gameover',['sounds/Game_Over.mp3',...names('Game_Over','game_over')],0.8);const sev=[];let f0=0;const FCYC=Math.round(11289000/16/60);
+m.sndWrite=(a,v)=>sev.push([m.cpu.cycles-f0,a,v]);
+const unlock=()=>au.unlock();['pointerdown','touchstart','keydown'].forEach(t=>addEventListener(t,unlock,{capture:true,passive:true}));
+document.getElementById('snd').addEventListener('pointerdown',e=>{e.preventDefault();au.unlock();e.target.textContent=au.toggle()?'🔊':'🔇';});
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),id=ctx.createImageData(256,256),buf=new Uint32Array(id.data.buffer);
+const fxc=document.getElementById('fx'),fx=fxc.getContext('2d');const FXS=3;
+msg.textContent='Tap to start';msg.onclick=()=>msg.remove();setTimeout(()=>msg.remove(),100);
+
+// ---------- game-state helpers (addresses found by tracing the Targ program) ----------
+// $1C/$1D player x/y, $22/$23 missile x/y, $24/$25 missile step, $31 missile active, $B1 enemies left.
+// Tile under a game coordinate: col=((255-x)>>3)-2, row=((255-y)>>3)-1. Lanes: rows 3,6..30 and cols 2,5..29.
+const boardUp=()=>m.vram[2*32+5]===0x60;
+const alive=()=>boardUp()&&(m.mol&15)<8;
+const isEnemy=t=>t>=0x08&&t<0x20;
+const scr=(x,y)=>[228-x,244-y]; // game coords -> centre of sprite on the 240x256 canvas
+let started=false;
+
+// ---------- extra missiles (three more, each four yellow blocks, behind the game's missile, always leaving from the car's nose) ----------
+// The arcade game itself only has one missile. On each shot we queue EXTRA_MISSILES more and launch them one after
+// another, each as soon as the missile in front of it is MISSILE_SPACING px ahead of the car's nose, so the four
+// missiles fly evenly spaced (a block repeats every 24 px: 16 px building + 8 px lane). If the missile in front is
+// gone (it hit something) or the car has turned, the next one goes after the time that spacing would take.
+// Each extra is launched from wherever the car is *now*, in the direction it is *now* heading (never from an old
+// launch spot that could be behind the car).
+const MISSILE_SPACING=44; // px between consecutive missiles; tune here
+const EXTRA_MISSILES=3;   // extras per shot, so 4 missiles in total
+let ghosts=[],pend=null,prevAct=0,lastMx=0,lastMy=0,gSpeed=2.25,headX=0,headY=0,hpx=0,hpy=0;const mCode={};
+function moveGhost(g){ // advance one extra missile; returns false when it is spent (hit something / left the board)
+  g.acc+=gSpeed;
+  while(g.acc>=1){g.acc-=1;g.x+=g.dx;g.y+=g.dy;g.trav++;
+    if(g.x<0||g.x>0xd9||g.y<0||g.y>0xd7)return false;
+    if(g.trav<4)continue;
+    const col=((255-g.x)>>3)-2,row=((255-g.y)>>3)-1;if(row<0||row>31||col<0||col>31)return false;
+    const a=row*32+col,t=m.vram[a];
+    if(t===0x20||t===0x21)continue;
+    if(isEnemy(t)){m.vram[a]=0x21;m.ram[0x30]|=4;} // same hit marker the game's own missile leaves
+    g.dead=true;return false;}
+  return true;
+}
+function aheadOfCar(x,y,px,py){ // how far a missile at x,y is ahead of the car along its heading (null if not in line)
+  if(!headX&&!headY)return null;
+  if(headX?Math.abs(y-py)>3:Math.abs(x-px)>3)return null;
+  const d=(x-px)*headX+(y-py)*headY;return d>0?d:null;
+}
+function ghostStep(){ // returns 1 when the game fires, 2 when an extra missile launches
+  const act=m.ram[0x31],mx=m.ram[0x22],my=m.ram[0x23];let ev=0;
+  const px=m.ram[0x1c],py=m.ram[0x1d],pdx=Math.sign(px-hpx),pdy=Math.sign(py-hpy);
+  if(Math.abs(px-hpx)+Math.abs(py-hpy)<8&&(pdx||pdy)&&!(pdx&&pdy)){headX=pdx;headY=pdy;} // car's current heading
+  hpx=px;hpy=py;
+  if(act&&prevAct){const ax=m.ram[0x24]?'h':'v'; // learn the missile sprite once the game has drawn it (not on the firing frame)
+    if(m.ram[0x24]||m.ram[0x25])mCode[ax]=(m.mol>>4)|((m.cpl&0x40)?16:0);}
+  if(!alive()){ghosts=[];pend=null;}
+  else if(act&&!prevAct){const sg=v=>v===0?0:(v<128?1:-1);const dx=sg(m.ram[0x24]),dy=sg(m.ram[0x25]);
+    if(dx||dy){pend={dx,dy,left:EXTRA_MISSILES,ref:null,since:0};ev=1;}} // a new shot queues a fresh set
+  else if(act&&prevAct){const d=Math.abs(mx-lastMx)+Math.abs(my-lastMy);if(d<8)gSpeed=gSpeed*0.9+d*0.1;}
+  prevAct=act;lastMx=mx;lastMy=my;
+  if(pend){pend.since++;
+    const r=pend.ref; // missile in front: the game's own (null) or the last extra launched
+    const ahead=r?(r.dead||!ghosts.includes(r)?null:aheadOfCar(r.x,r.y,px,py)):(act?aheadOfCar(mx,my,px,py):null);
+    const tWait=Math.round(MISSILE_SPACING/gSpeed)+3;
+    if(ahead!==null?ahead>=MISSILE_SPACING||pend.since>=3*tWait:pend.since>=tWait){
+      let dx=headX,dy=headY;if(!dx&&!dy){dx=pend.dx;dy=pend.dy;}
+      const g={x:px+dx,y:py+dy,dx,dy,acc:0,trav:0,code:mCode[dx?'h':'v']??((m.mol>>4)|((m.cpl&0x40)?16:0))};
+      ghosts.push(g);pend.ref=g;pend.since=0;if(--pend.left<=0)pend=null;ev=2;}}
+  ghosts=ghosts.filter(moveGhost);
+  return ev;
+}
+
+// ---------- Hyperspace ----------
+const CD_FRAMES=15*60;let cd=0,frozen=null;const hyBtn=document.getElementById('hyper'),hyT=document.getElementById('hyt');
+function pickSpot(){
+  const en=[];for(let r=3;r<31;r++)for(let c=2;c<30;c++){const t=m.vram[r*32+c];if(isEnemy(t)||t===0x21)en.push([c,r]);}
+  const px=((255-m.ram[0x1c])>>3)-2,py=((255-m.ram[0x1d])>>3)-1;
+  let gx=0,gy=0;for(const [c,r] of en){gx+=c;gy+=r;}if(en.length){gx/=en.length;gy/=en.length;}
+  const cands=[];
+  for(let r=3;r<=30;r+=3)for(let c=2;c<=29;c+=3){
+    if(m.vram[r*32+c]!==0x20)continue; // must be open blue lane, never a building
+    let md=99;for(const [ec,er] of en)md=Math.min(md,Math.abs(ec-c)+Math.abs(er-r));
+    // also keep clear of enemies in the same lane heading this way
+    for(const [ec,er] of en){if((er===r&&Math.abs(ec-c)<9)||(ec===c&&Math.abs(er-r)<9))md=Math.min(md,Math.abs(ec-c)+Math.abs(er-r)+2);}
+    if(Math.abs(px-c)+Math.abs(py-r)<6)continue;
+    const far=en.length?Math.hypot(c-gx,r-gy):0;
+    cands.push({c,r,md,score:far+0.7*Math.min(md,14)+Math.random()*4});}
+  let safe=cands.filter(k=>k.md>=8);if(!safe.length)safe=cands.filter(k=>k.md>=5);if(!safe.length)safe=cands.sort((a,b)=>b.md-a.md).slice(0,1);
+  safe.sort((a,b)=>b.score-a.score);const pick=safe[Math.floor(Math.random()*Math.min(4,safe.length))];
+  return pick?{x:8*(29-pick.c),y:8*(30-pick.r)}:null;
+}
+// Transition length ~2.75 s (was ~0.9 s): the car vanishes, moves at the midpoint, then reappears.
+const HY_DUR=165,HY_MID=82;
+function hyperspace(){
+  if(frozen||cd>0||!started||!alive())return;
+  const to=pickSpot();if(!to)return;
+  frozen={type:'hyper',f:0,dur:HY_DUR,mid:HY_MID,from:{x:m.ram[0x1c],y:m.ram[0x1d]},to,col:m.palette[0]};
+  cd=CD_FRAMES;au.hold=true;au.sample('hyper','hyper');
+}
+function hyperTick(z){
+  z.f++;
+  if(z.f===HY_MID-26)m.hideP=true;
+  if(z.f===HY_MID){m.ram[0x1c]=z.to.x;m.ram[0x1d]=z.to.y;m.s1x=z.to.x;m.s1y=z.to.y;}
+  if(z.f===HY_MID+48)m.hideP=false;
+  if(z.f>=z.dur){frozen=null;au.hold=false;m.hideP=false;}
+}
+
+// ---------- screen-clear fanfare ----------
+let prevB1=0,fanfareIn=0;
+function clearCheck(){
+  const b=m.ram[0xb1];
+  if(started&&boardUp()&&prevB1===1&&b===0&&!fanfareIn){fanfareIn=24;spectarHeard=false;} // let the last explosion show first
+  prevB1=b;
+  if(fanfareIn&&--fanfareIn===0){frozen={type:'fan',f:0,dur:165,parts:[]};au.hold=true;au.play('fanfare');}
+}
+
+// ---------- Hyperspace ripple: the whole screen wobbles like a pond after a stone drops into its centre ----------
+// Waves keep spreading from the centre; a second "drop" lands at the moment the car is relocated.
+const RW=256,RC=128,RN=200,rDist=new Float32Array(RW*RW),rUx=new Float32Array(RW*RW),rUy=new Float32Array(RW*RW);
+for(let y=0;y<RW;y++)for(let x=0;x<RW;x++){const dx=x-RC,dy=y-RC,d=Math.hypot(dx,dy),i=y*RW+x;rDist[i]=d;rUx[i]=d?dx/d:0;rUy[i]=d?dy/d:0;}
+const rDisp=new Float32Array(RN+2),wid=ctx.createImageData(256,256),wbuf=new Uint32Array(wid.data.buffer);
+const RIP_K=0.21,RIP_SPEED=2.6;
+function dropsAt(f){return [[f,1],[f-HY_MID,0.8]].filter(([t])=>t>=0);} // [frames since drop, strength]
+function rippleEnv(f){const fade=Math.min(1,(HY_DUR-f)/30);return Math.max(0,fade);}
+function rippleCrests(f){const out=[],env=rippleEnv(f);
+  for(const [t,str] of dropsAt(f)){const front=t*RIP_SPEED;for(let k=0;k<6;k++){const rr=front-k*(2*Math.PI/RIP_K);if(rr>0)out.push([rr,env*str*Math.exp(-k*0.35)]);}}
+  return out;}
+function rippleWarp(src,dst,f){
+  rDisp.fill(0);const env=rippleEnv(f);
+  for(const [t,str] of dropsAt(f)){const front=t*RIP_SPEED,amp=4.2*str*env*Math.exp(-t/120);
+    for(let r=0;r<=RN;r++){if(r>front)break;const edge=Math.min(1,(front-r)/10);
+      rDisp[r]+=amp*edge*Math.sin(RIP_K*(front-r))/(1+r/90);}}
+  const sh=1.1*env,ph=f*0.35; // gentle shimmering heat haze on top of the rings
+  for(let y=0;y<RW;y++){const hx=sh*Math.sin(y*0.19+ph),row=y*RW;
+    for(let x=0;x<RW;x++){const i=row+x,d=rDist[i],ri=d|0,fr=d-ri,dv=ri<RN?rDisp[ri]*(1-fr)+rDisp[ri+1]*fr:0;
+      let sx=(x-rUx[i]*dv+hx+0.5)|0,sy=(y-rUy[i]*dv+0.5)|0;
+      if(sx<0)sx=0;else if(sx>255)sx=255;if(sy<0)sy=0;else if(sy>255)sy=255;dst[i]=src[sy*RW+sx];}}
+}
+
+// ---------- effects layer ----------
+const P=[];
+function drawFx(){
+  fx.setTransform(1,0,0,1,0,0);fx.clearRect(0,0,fxc.width,fxc.height);fx.setTransform(FXS,0,0,FXS,0,0);
+  if(!frozen)return;const z=frozen;
+  if(z.type==='hyper'){
+    fx.globalCompositeOperation='lighter';
+    const dim=Math.sin(Math.min(1,z.f/z.dur)*Math.PI);fx.fillStyle=`rgba(20,0,60,${0.35*dim})`;fx.fillRect(0,0,240,256);
+    // glowing crests of the pond ripples spreading from the centre of the screen (matches the warp below)
+    fx.lineWidth=2;for(const [rr,a] of rippleCrests(z.f))if(rr>0&&rr<200){fx.strokeStyle=`rgba(140,220,255,${(0.16*a).toFixed(3)})`;fx.beginPath();fx.arc(120,128,rr,0,Math.PI*2);fx.stroke();}
+    const phase1=z.f<z.mid,p=phase1?z.f/z.mid:(z.f-z.mid)/(z.dur-z.mid);
+    const [cx,cy]=scr(phase1?z.from.x:z.to.x,phase1?z.from.y:z.to.y);
+    // spiralling particles: outward on departure, inward on arrival
+    const R=phase1?4+p*34:38*(1-p)+2;
+    for(let i=0;i<18;i++){const a=i/18*Math.PI*2+z.f*0.22*(phase1?1:-1);const rr=R*(0.6+0.4*((i*7)%5)/5);
+      const hue=(190+i*12+z.f*6)%360;fx.fillStyle=`hsla(${hue},100%,65%,${phase1?1-p*0.7:0.4+p*0.6})`;
+      fx.beginPath();fx.arc(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr,1.3,0,Math.PI*2);fx.fill();}
+    // rings
+    fx.lineWidth=1.2;for(let k=0;k<3;k++){const rr=phase1?(p*30+k*7):(30*(1-p)+k*5);if(rr<=0)continue;
+      fx.strokeStyle=`hsla(${280-k*40},100%,70%,${(1-p*0.6)*0.8})`;fx.beginPath();fx.arc(cx,cy,rr,0,Math.PI*2);fx.stroke();}
+    // vertical beam
+    const bw=phase1?6*(1-p)+1:6*p+1;const g=fx.createLinearGradient(0,cy-60,0,cy+60);
+    g.addColorStop(0,'rgba(120,200,255,0)');g.addColorStop(0.5,`rgba(180,230,255,${phase1?0.9-p*0.6:0.3+p*0.6})`);g.addColorStop(1,'rgba(120,200,255,0)');
+    fx.fillStyle=g;fx.fillRect(cx-bw/2,cy-60,bw,120);
+    if(!phase1&&p>0.65){fx.fillStyle=`rgba(255,255,255,${(1-p)*2.5})`;fx.beginPath();fx.arc(cx,cy,9*(1-p)+3,0,Math.PI*2);fx.fill();}
+    fx.globalCompositeOperation='source-over';
+  } else if(z.type==='fan'){
+    const t=z.f/60;fx.fillStyle=`rgba(0,0,0,${Math.min(0.55,z.f/20)})`;fx.fillRect(0,0,240,256);
+    if(z.f%2===0&&z.f<130)for(let i=0;i<4;i++)z.parts.push({x:120+(Math.random()-0.5)*40,y:110,vx:(Math.random()-0.5)*4,vy:-Math.random()*3.5-1,h:Math.random()*360,l:60});
+    for(const q of z.parts){q.x+=q.vx;q.y+=q.vy;q.vy+=0.08;q.l--;fx.fillStyle=`hsla(${q.h},100%,62%,${Math.max(0,q.l/60)})`;fx.fillRect(q.x,q.y,2.2,2.2);}
+    z.parts=z.parts.filter(q=>q.l>0);
+    const sc=Math.min(1,t*4)*(1+0.04*Math.sin(t*12));fx.save();fx.translate(120,112);fx.scale(sc,sc);
+    fx.textAlign='center';fx.textBaseline='middle';fx.font='900 22px -apple-system,Helvetica,sans-serif';
+    fx.shadowColor='#ffb000';fx.shadowBlur=12;const gg=fx.createLinearGradient(0,-12,0,12);gg.addColorStop(0,'#fff6b0');gg.addColorStop(1,'#ff9d00');
+    fx.fillStyle=gg;fx.fillText('SCREEN CLEAR!',0,0);fx.shadowBlur=0;fx.font='700 9px -apple-system,Helvetica,sans-serif';fx.fillStyle='#fff';
+    if(t>0.9)fx.fillText('GET READY FOR THE NEXT WAVE',0,22);fx.restore();
+  }
+}
+function updHyperUI(){const ready=cd===0;hyBtn.classList.toggle('ready',ready&&started);
+  hyBtn.style.setProperty('--p',((CD_FRAMES-cd)/CD_FRAMES*360).toFixed(1)+'deg');hyT.textContent=ready?'HYPER':Math.ceil(cd/60)+'s';}
+
+// ---------- free car every 1,500 points ----------
+// Score: BCD bytes $BC (top two digits) and $BD (next two) - the last two shown digits are always 00.
+// $C1 = cars left for the player in play (also drawn as the car icons at row 1, columns 10+).
+const BONUS=1500;let prevScore=0;
+const bcd=v=>(v>>4)*10+(v&15),score=()=>(bcd(m.ram[0xbc])*100+bcd(m.ram[0xbd]))*100;
+function bonusCheck(){
+  const sc=score();
+  // only count normal in-game scoring (small step up) - not score resets or player swaps
+  if(started&&boardUp()&&sc>prevScore&&sc-prevScore<=1000&&Math.floor(sc/BONUS)>Math.floor(prevScore/BONUS)){
+    const n=Math.min(m.ram[0xc1]+1,9);m.ram[0xc1]=n;
+    for(let i=0;i<6;i++)m.vram[32+10+i]=i<n?0x64:0x20; // refresh the car icons right away
+    au.sample('freeman','fanfare');}
+  prevScore=sc;
+}
+// ---------- Spectar (cyan bonus target, tiles $C8-$DF) emerging ----------
+// The Spectar's sound plays only the first time he materializes on a screen (he keeps slipping in and out of the
+// buildings, which used to replay it every time). It is re-armed when the screen is cleared or the game ends,
+// and stays quiet in the attract-mode demo (no cars in play, $C1 = 0).
+let spectarOn=false,spectarHeard=false;
+function spectarCheck(){
+  let on=false;if(started&&boardUp())for(let r=3;r<31&&!on;r++)for(let c=2;c<30;c++){const t=m.vram[r*32+c];if(t>=0xc8&&t<=0xdf){on=true;break;}}
+  if(on&&!spectarOn&&!spectarHeard&&m.ram[0xc1]>0){au.sample('spectar','warn');au.muteSpec(1.1);spectarHeard=true;}
+  spectarOn=on;
+}
+
+// ---------- Game Over: the game prints END OF GAME at row 16, column 12 after the last car is lost ----------
+// The Game Over sound normally starts at the final crash; this only plays it if that crash wasn't caught.
+let endShown=false,finalCrash=-1e9,frameNo=0;
+function gameOverCheck(){const a=16*32+12,on=m.vram[a]===0x45&&m.vram[a+1]===0x4e&&m.vram[a+2]===0x44;
+  if(on&&!endShown){if(started&&frameNo-finalCrash>60*6)au.sample('gameover','gameover');spectarHeard=false;}endShown=on;}
+
+// ---------- skid: the game itself makes the car brake before it can reverse; play a skid while it does ----------
+let skidV=null,skidding=false,skHx=0,skHy=0;
+function skidCheck(){
+  const d=I.up?'up':I.down?'down':I.left?'left':I.right?'right':null;
+  const rev=!!d&&alive()&&!!(headX||headY)&&MOVES[d][0]===-headX&&MOVES[d][1]===-headY;
+  if(rev&&!skidding){skidV=au.sample('skid','skid');skHx=headX;skHy=headY;}
+  else if(!rev&&skidding){ // braking ended: if the car never turned round (stick released / dead), cut the squeal short
+    if(headX===skHx&&headY===skHy||!alive())au.stop(skidV);skidV=null;}
+  skidding=rev;
+}
+
+// ---------- main loop ----------
+let paused=false,last=performance.now(),acc=0;
+function step(){
+  if(cd>0)cd--;
+  if(frozen){au.frame([],FCYC);if(frozen.type==='hyper')hyperTick(frozen);else if(++frozen.f>=frozen.dur){frozen=null;au.hold=false;}return;}
+  const wasAlive=alive();f0=m.cpu.cycles;m.frame();
+  frameNo++;
+  if(started&&wasAlive&&!alive()&&boardUp()){ // car hit by an enemy; $C1 still counts the car just lost, so 1 = last car
+    const last=m.ram[0xc1]===1;if(last)finalCrash=frameNo;au.playerDeath(last);}
+  au.frame(sev,FCYC);sev.length=0;
+  if(ghostStep()===2)au.play('shoot');turnStep();skidCheck();
+  clearCheck();bonusCheck();spectarCheck();gameOverCheck();
+}
+function loop(t){acc+=Math.min(100,t-last);last=t;
+  if(!paused)while(acc>=1000/60){step();acc-=1000/60;} else acc=0;
+  m.extra=ghosts.map(g=>[mCode[g.dx?'h':'v']??g.code,g.x,g.y]);
+  m.render(buf);if(frozen&&frozen.type==='hyper'){rippleWarp(buf,wbuf,frozen.f);ctx.putImageData(wid,-8,0);}else ctx.putImageData(id,-8,0);drawFx();updHyperUI();requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+const I=m.inp;
+
+// ---------- input: strictly 4-way (one direction at a time, never diagonal) ----------
+// The car keeps rolling and the game only accepts a turn when the car reaches a crossing, so a quick tap
+// between crossings used to be lost. A new direction is now remembered (buffered) until the car actually
+// turns that way, or it has rolled past the next crossing without being able to (about one block).
+let padDir=null,heldDir=null,want=null,wantDist=0,wantF=0,tx=0,ty=0;const keyStack=[];
+const MOVES={left:[1,0],right:[-1,0],up:[0,1],down:[0,-1]}; // game-coordinate direction of each input
+function feedDir(){const d=heldDir||want;I.up=I.down=I.left=I.right=0;if(d)I[d]=1;}
+function applyDir(){const d=padDir||keyStack[keyStack.length-1]||null;
+  if(d&&d!==heldDir){want=d;wantDist=0;wantF=0;tx=m.ram[0x1c];ty=m.ram[0x1d];}
+  heldDir=d;feedDir();
+  for(const k of ['up','down','left','right'])document.getElementById('d'+k).classList.toggle('on',d===k);}
+function turnStep(){ // called once per game frame
+  const x=m.ram[0x1c],y=m.ram[0x1d],dx=x-tx,dy=y-ty;tx=x;ty=y;
+  if(!want)return;
+  if(!alive()){want=null;feedDir();return;}
+  const [wx,wy]=MOVES[want];
+  if((wx&&Math.sign(dx)===wx)||(wy&&Math.sign(dy)===wy)){want=null;feedDir();return;} // turn taken
+  if(!(wx===-headX&&wy===-headY))wantDist+=Math.abs(dx)+Math.abs(dy);
+  if(wantDist>26||++wantF>90){want=null;feedDir();}
+}
+const K={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'fire',KeyJ:'fire',Digit5:'coin',KeyC:'coin',Digit1:'start1',Enter:'start1',Digit2:'start2'};
+const DIRS={up:1,down:1,left:1,right:1};
+addEventListener('keydown',e=>{if(e.code==='KeyP'){paused=!paused;return;}if(e.code==='KeyH'||e.code==='ShiftLeft'||e.code==='ShiftRight'){e.preventDefault();hyperspace();return;}
+  const k=K[e.code];if(!k)return;e.preventDefault();if(e.repeat)return;
+  if(DIRS[k]){const i=keyStack.indexOf(k);if(i>=0)keyStack.splice(i,1);keyStack.push(k);applyDir();}else{I[k]=1;if(k==='start1'||k==='start2')started=true;}});
+addEventListener('keyup',e=>{const k=K[e.code];if(!k)return;e.preventDefault();
+  if(DIRS[k]){const i=keyStack.indexOf(k);if(i>=0)keyStack.splice(i,1);applyDir();}else I[k]=0;});
+// buttons (pointer capture keeps a press alive if the finger drifts slightly)
+const hold=(el,k)=>{const on=e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId);}catch(_){}I[k]=1;el.classList.add('on');if(k==='start1'||k==='start2')started=true;},
+  off=e=>{e.preventDefault();I[k]=0;el.classList.remove('on');};
+  el.addEventListener('pointerdown',on);['pointerup','pointercancel','lostpointercapture'].forEach(t=>el.addEventListener(t,off));};
+hold(document.getElementById('fire'),'fire');hold(document.getElementById('coin'),'coin');
+hold(document.getElementById('start'),'start1');hold(document.getElementById('start2'),'start2');
+hyBtn.addEventListener('pointerdown',e=>{e.preventDefault();hyBtn.classList.add('on');hyperspace();});
+['pointerup','pointercancel','pointerleave'].forEach(t=>hyBtn.addEventListener(t,()=>hyBtn.classList.remove('on')));
+// D-pad: the touch picks exactly one of N/S/E/W by its dominant axis; sliding switches cleanly, no in-between
+const pad=document.getElementById('dpad');let pid=null;
+function padPos(e){const b=pad.getBoundingClientRect();const dx=(e.clientX-b.left)/b.width-0.5,dy=(e.clientY-b.top)/b.height-0.5;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<0.09){padDir=null;}else padDir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');applyDir();}
+pad.addEventListener('pointerdown',e=>{e.preventDefault();if(pid!==null)return;pid=e.pointerId;try{pad.setPointerCapture(pid);}catch(_){}padPos(e);});
+pad.addEventListener('pointermove',e=>{if(e.pointerId===pid)padPos(e);});
+['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t,e=>{if(e.pointerId===pid){pid=null;padDir=null;applyDir();}}));
+document.addEventListener('visibilitychange',()=>{paused=document.hidden;});
+// Safari: block pinch/double-tap zoom and long-press menus that hijack game touches
+['gesturestart','gesturechange','dblclick','contextmenu'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+}catch(err){msg.textContent='Error: '+err;}
+})();
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+</script></body></html>
