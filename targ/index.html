@@ -337,7 +337,7 @@ let started=false;
 // gone (it hit something) or the car has turned, the next one goes after the time that spacing would take.
 // Each extra is launched from wherever the car is *now*, in the direction it is *now* heading (never from an old
 // launch spot that could be behind the car).
-const MISSILE_SPACING=44; // px between consecutive missiles; tune here
+const MISSILE_SPACING=22; // px between consecutive missiles; tune here
 const EXTRA_MISSILES=3;   // extras per shot, so 4 missiles in total
 let ghosts=[],pend=null,prevAct=0,lastMx=0,lastMy=0,gSpeed=2.25,headX=0,headY=0,hpx=0,hpy=0;const mCode={};
 function moveGhost(g){ // advance one extra missile; returns false when it is spent (hit something / left the board)
