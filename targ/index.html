@@ -21,10 +21,14 @@ html,body{margin:0;height:100%;height:100dvh;-webkit-text-size-adjust:100%;backg
 #hyper{position:absolute;left:calc(max(10px,env(safe-area-inset-left)) + min(3vw,28px));bottom:calc(max(4vh,env(safe-area-inset-bottom)) + min(16vw,150px) + 22px);width:min(10vw,94px);height:min(10vw,94px);border-radius:50%;--p:0deg;background:conic-gradient(rgba(140,120,255,.35) var(--p),rgba(255,255,255,.06) 0);border:2px solid rgba(170,160,255,.3);color:rgba(255,255,255,.55);font:700 12px sans-serif;display:flex;align-items:center;justify-content:center;opacity:.55}
 #hyper.ready{opacity:.75;border-color:rgba(190,180,255,.7);box-shadow:0 0 14px rgba(140,120,255,.45)}
 #hyper.on{background:rgba(170,150,255,.6)}
-#dpad{touch-action:none;position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(4vh,env(safe-area-inset-bottom));width:min(22vw,220px);height:min(22vw,220px)}
-#dpad>div{position:absolute;width:34%;height:34%;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.35);border-radius:14%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);font-size:min(4vw,34px)}
-#dpad>div.on{background:rgba(255,255,255,.45)}
-#dup{left:33%;top:0}#ddown{left:33%;bottom:0}#dleft{left:0;top:33%}#dright{right:0;top:33%}
+#dpad{touch-action:none;position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(4vh,env(safe-area-inset-bottom));width:min(20vw,200px);height:min(20vw,200px)}
+#padZone{position:absolute;inset:-26px;border-radius:50%;touch-action:none}
+#stick{position:absolute;inset:0;border:2px solid rgba(255,255,255,.35);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,.06));box-shadow:inset 0 2px 16px #0006;pointer-events:none}
+#stick:before{content:"";position:absolute;top:12%;bottom:12%;left:36.5%;right:36.5%;background:rgba(255,255,255,.14);border-radius:8px}#stick:after{content:"";position:absolute;left:12%;right:12%;top:36.5%;bottom:36.5%;background:rgba(255,255,255,.14);border-radius:8px}
+#stick *{pointer-events:none}
+#knob{position:absolute;z-index:2;left:34.5%;top:34.5%;width:31%;height:31%;border-radius:50%;background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.75),rgba(150,150,160,.55));border:1px solid rgba(255,255,255,.7);box-shadow:0 3px 8px #0009}
+.arrow{position:absolute;z-index:1;color:rgba(255,255,255,.7);font-size:min(2.2vw,20px);line-height:1;transform:translate(-50%,-50%)}.arrow.up{left:50%;top:6%}.arrow.down{left:50%;top:94%}.arrow.left{left:6%;top:50%}.arrow.right{left:94%;top:50%}
+.arrow.on{color:#fff}
 .btn{position:absolute;top:max(12px,env(safe-area-inset-top));font:700 15px sans-serif;background:#222c;color:#ddd;border:1px solid #666;border-radius:10px;padding:10px 16px}
 #coin{left:max(14px,env(safe-area-inset-left))}#start{left:calc(max(14px,env(safe-area-inset-left)) + 92px)}
 #start2{left:calc(max(14px,env(safe-area-inset-left)) + 205px)}
@@ -37,7 +41,7 @@ html,body{margin:0;height:100%;height:100dvh;-webkit-text-size-adjust:100%;backg
 <canvas id="fx" width="720" height="768"></canvas>
 <div id="fire">FIRE</div>
 <div id="hyper"><span id="hyt">HYPER</span></div>
-<div id="dpad"><div id="dup">▲</div><div id="dleft">◀</div><div id="dright">▶</div><div id="ddown">▼</div></div>
+<div id="dpad" role="group" aria-label="Four-way joystick"><div id="padZone"></div><div id="stick"><span class="arrow up" id="dup">▲</span><span class="arrow down" id="ddown">▼</span><span class="arrow left" id="dleft">◀</span><span class="arrow right" id="dright">▶</span><div id="knob"></div></div></div>
 <div id="msg">Loading…</div>
 <script>// Compact NMOS 6502 core (documented opcodes) - written for this project
 function CPU6502(read, write){
@@ -561,7 +565,9 @@ function feedDir(){const d=heldDir||want;I.up=I.down=I.left=I.right=0;if(d)I[d]=
 function applyDir(){const d=padDir||keyStack[keyStack.length-1]||null;
   if(d&&d!==heldDir){want=d;wantDist=0;wantF=0;tx=m.ram[0x1c];ty=m.ram[0x1d];}
   heldDir=d;feedDir();
-  for(const k of ['up','down','left','right'])document.getElementById('d'+k).classList.toggle('on',d===k);}
+  for(const k of ['up','down','left','right'])document.getElementById('d'+k).classList.toggle('on',d===k);
+  const kn=document.getElementById('knob'),w=document.getElementById('stick').getBoundingClientRect().width*0.182,v={left:[-w,0],right:[w,0],up:[0,-w],down:[0,w]}[d];
+  kn.style.transform=v?`translate(${v[0].toFixed(1)}px,${v[1].toFixed(1)}px)`:'';}
 function turnStep(){ // called once per game frame
   const x=m.ram[0x1c],y=m.ram[0x1d],dx=x-tx,dy=y-ty;tx=x;ty=y;
   if(!want)return;
@@ -586,13 +592,20 @@ hold(document.getElementById('fire'),'fire');hold(document.getElementById('coin'
 hold(document.getElementById('start'),'start1');hold(document.getElementById('start2'),'start2');
 hyBtn.addEventListener('pointerdown',e=>{e.preventDefault();hyBtn.classList.add('on');hyperspace();});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>hyBtn.addEventListener(t,()=>hyBtn.classList.remove('on')));
-// D-pad: the touch picks exactly one of N/S/E/W by its dominant axis; sliding switches cleanly, no in-between
-const pad=document.getElementById('dpad');let pid=null;
-function padPos(e){const b=pad.getBoundingClientRect();const dx=(e.clientX-b.left)/b.width-0.5,dy=(e.clientY-b.top)/b.height-0.5;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<0.09){padDir=null;}else padDir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');applyDir();}
+// Joystick (same design as arcade Amidar): the whole pad plus an invisible 26px ring is live. Direction is the
+// touch position relative to the pad's FIXED centre, strict 4-way by dominant axis (with a little hysteresis so it
+// doesn't flicker on the diagonal), small neutral spot in the middle. Pointer ids keep FIRE usable with the other thumb.
+const pad=document.getElementById('padZone'),stickEl=document.getElementById('stick');let pid=null;
+function dir4(x,y,old){const horiz=old==='left'||old==='right';let ax;
+  if(old)ax=horiz?(Math.abs(y)>Math.abs(x)*1.15?'y':'x'):(Math.abs(x)>Math.abs(y)*1.15?'x':'y');else ax=Math.abs(x)>=Math.abs(y)?'x':'y';
+  return ax==='x'?(x>=0?'right':'left'):(y>=0?'down':'up');}
+function padPos(e){const r=stickEl.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+  padDir=Math.hypot(dx,dy)<r.width*0.065?null:dir4(dx,dy,padDir);applyDir();}
+function padRel(e){if(e&&e.pointerId!==undefined&&e.pointerId!==pid)return;pid=null;padDir=null;applyDir();}
 pad.addEventListener('pointerdown',e=>{e.preventDefault();if(pid!==null)return;pid=e.pointerId;try{pad.setPointerCapture(pid);}catch(_){}padPos(e);});
-pad.addEventListener('pointermove',e=>{if(e.pointerId===pid)padPos(e);});
-['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t,e=>{if(e.pointerId===pid){pid=null;padDir=null;applyDir();}}));
+pad.addEventListener('pointermove',e=>{if(e.pointerId===pid){e.preventDefault();padPos(e);}});
+['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t,padRel));
+addEventListener('blur',()=>{if(pid!==null)padRel();});
 document.addEventListener('visibilitychange',()=>{paused=document.hidden;});
 // Safari: block pinch/double-tap zoom and long-press menus that hijack game touches
 ['gesturestart','gesturechange','dblclick','contextmenu'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
